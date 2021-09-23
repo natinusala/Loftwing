@@ -27,22 +27,43 @@ public class NVGContext {
         self.vg = vg
     }
 
-    public func beginFrame(windowWidth: Float, windowHeight: Float, devicePixelRatio: Float) {
-        nvgBeginFrame(self.vg, windowWidth, windowHeight, devicePixelRatio)
-    }
-
-    public func endFrame() {
-        nvgEndFrame(self.vg)
-    }
-
-    public func beginPath() -> NVGPath {
-        return NVGPath(self.vg)
+    public func beginFrame(windowWidth: Float, windowHeight: Float, devicePixelRatio: Float) -> NVGFrame {
+        return NVGFrame(
+            self.vg,
+            windowWidth: windowWidth,
+            windowHeight: windowHeight,
+            devicePixelRatio: devicePixelRatio
+        )
     }
 
     deinit {
 #if GL3
         nvgDeleteGL3(self.vg)
 #endif
+    }
+}
+
+/// Nanovg frame wrapper.
+public class NVGFrame {
+    private let vg: OpaquePointer
+
+    fileprivate init(
+        _ vg: OpaquePointer,
+        windowWidth: Float,
+        windowHeight: Float,
+        devicePixelRatio: Float
+    ) {
+        self.vg = vg
+
+        nvgBeginFrame(self.vg, windowWidth, windowHeight, devicePixelRatio)
+    }
+
+    public func beginPath() -> NVGPath {
+        return NVGPath(self.vg)
+    }
+
+    public func end() {
+        nvgEndFrame(self.vg)
     }
 }
 
@@ -69,7 +90,8 @@ public class NVGPath {
         return self
     }
 
-    public func fill() {
+    public func fill() -> NVGPath {
         nvgFill(self.vg)
+        return self
     }
 }

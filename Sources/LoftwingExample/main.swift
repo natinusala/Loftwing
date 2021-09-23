@@ -42,14 +42,18 @@ while glfwWindowShouldClose(window) == 0 {
 
     glClear(UInt32(GL_COLOR_BUFFER_BIT) | UInt32(GL_DEPTH_BUFFER_BIT) | UInt32(GL_STENCIL_BUFFER_BIT))
 
-    vg.beginFrame(windowWidth: Float(winWidth), windowHeight: Float(winHeight), devicePixelRatio: pxRatio)
+    let frame = vg.beginFrame(
+        windowWidth: Float(winWidth),
+        windowHeight: Float(winHeight),
+        devicePixelRatio: pxRatio
+    )
 
-    vg.beginPath()
+    frame.beginPath()
         .rect(x: 0, y: 0, width: 100, height: 100)
         .fillColor(nvgRGBA(28, 30, 34, 192))
         .fill()
 
-    vg.endFrame()
+    frame.end()
 
     glfwSwapBuffers(window)
     glfwPollEvents()
