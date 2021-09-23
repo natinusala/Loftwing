@@ -1,0 +1,4 @@
+module GLFW {
+    umbrella header "glfw.h"
+    link "glfw" // TODO: find out why that's necessary, it should be added from pkg-config already
+}
