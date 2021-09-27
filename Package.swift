@@ -21,7 +21,7 @@ let package = Package(
         // Loftwing targets
         .target(
             name: "Loftwing",
-            dependencies: ["GLFW", "Yoga", "NanoVG"]
+            dependencies: ["Yoga", "GLFW", "GL", "Skia"]
         ),
         .target(
             name: "LoftwingExample",
@@ -34,25 +34,17 @@ let package = Package(
         // Embedded native libraries
         .target(
             name: "CYoga",
+            path: "External/CYoga",
             linkerSettings: [.linkedLibrary("m")]
         ),
         .target(
             name: "Yoga",
-            dependencies: ["CYoga"]
-        ),
-        .target(
-            name: "CNanoVG_GL3",
-            dependencies: ["GL"],
-            cSettings: [.define("NANOVG_GL3")]
-        ),
-        .target(
-            name: "NanoVG",
-            // Swap those two lines to change the NanoVG implementation
-            dependencies: ["CNanoVG_GL3"],
-            swiftSettings: [.define("GL3")]
+            dependencies: ["CYoga"],
+            path: "External/Yoga"
         ),
         // System libraries
-        .systemLibrary(name: "GLFW", pkgConfig: "glfw3"),
-        .systemLibrary(name: "GL", pkgConfig: "gl")
+        .systemLibrary(name: "GLFW", path: "External/GLFW", pkgConfig: "glfw3"),
+        .systemLibrary(name: "GL", path: "External/GL", pkgConfig: "gl"),
+        .systemLibrary(name: "Skia", path: "External/Skia", pkgConfig: "skia_loftwing")
     ]
 )

@@ -1,0 +1,3 @@
+module Skia {
+    umbrella header "skia.h"
+}
