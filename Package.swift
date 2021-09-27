@@ -16,12 +16,19 @@ let package = Package(
         )
     ],
     dependencies: [
+        .package(url: "https://github.com/onevcat/Rainbow", .upToNextMajor(from: "4.0.0"))
     ],
     targets: [
         // Loftwing targets
         .target(
             name: "Loftwing",
-            dependencies: ["Yoga", "GLFW", "GL", "Skia"]
+            dependencies: [
+                "Yoga",
+                "GLFW",
+                "GL",
+                "Skia",
+                "Rainbow",
+            ]
         ),
         .target(
             name: "LoftwingExample",
@@ -35,6 +42,7 @@ let package = Package(
         .target(
             name: "CYoga",
             path: "External/CYoga",
+            exclude: ["LICENSE"],
             linkerSettings: [.linkedLibrary("m")]
         ),
         .target(

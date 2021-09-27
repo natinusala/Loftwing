@@ -14,21 +14,7 @@
     limitations under the License.
 */
 
-import Foundation
-
-import Loftwing
-
-struct ExampleApplication: Application {
-    let initialWindowMode = WindowMode.windowed(1280, 720)
-    let initialGraphicsContext: GraphicsContext? = nil
-
-    var mainActivity: Activity {
-        return MainActivity()
-    }
-}
-
-do {
-    try ExampleApplication.main()
-} catch {
-    Logger.error("Could not initialize application: \(error)")
-}
+/// An activity is the higher level building block of an application.
+/// It corresponds to a "screen" the user can enter and exit. An application
+// is made of a stack of activity.
+public protocol Activity {}
