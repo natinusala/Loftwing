@@ -18,6 +18,12 @@ import Rainbow
 
 public struct Logger {
     // TODO: implement log levels
+    // TODO: implement "labels" so that apps can enable / disable Loftwing logs
+
+    /// Logs an informative message.
+    public static func info(_ message: String) {
+        print("\("[INFO]".blue) \(message)")
+    }
 
     /// Logs an error message.
     public static func error(_ message: String) {

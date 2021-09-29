@@ -19,16 +19,16 @@ import Foundation
 import Loftwing
 
 struct ExampleApplication: Application {
+    let title = "Loftwing Example Application"
     let initialWindowMode = WindowMode.windowed(1280, 720)
-    let initialGraphicsContext: GraphicsContext? = nil
+    let initialGraphicsAPI: GraphicsAPI? = nil
 
-    var mainActivity: Activity {
-        return MainActivity()
-    }
+    var mainActivity: Activity = MainActivity()
 }
 
 do {
-    try ExampleApplication.main()
+    let app = ExampleApplication()
+    try app.main()
 } catch {
-    Logger.error("Could not initialize application: \(error)")
+    Logger.error("Could not run application: \(error)")
 }
