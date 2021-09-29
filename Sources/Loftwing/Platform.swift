@@ -56,6 +56,7 @@ public enum WindowMode {
 /// Window creation errors.
 public enum WindowCreationError: Error {
     case noGraphicsAPIAvailable
+    case noSkiaCanvas
 }
 
 /// The graphics API / renderer of an application.
@@ -73,9 +74,18 @@ public enum GraphicsAPI {
 
 /// Represents an application window.
 protocol Window {
+    /// Skia canvas pointer.
+    var canvas: OpaquePointer? { get }
+
     /// Loads or reloads the window. If called for the first time, will create
     /// and open a new window. If called when a window already exists, the existing
     /// window will be closed, all graphics resources will be released and a new window
     /// will be created in its place (using the same configuration).
     func reload() throws
+
+    /// Called before every frame begins.
+    func beginFrame()
+
+    /// Called before every frame ends.
+    func endFrame()
 }

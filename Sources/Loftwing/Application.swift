@@ -42,12 +42,13 @@ public extension Application {
 /// A Loftwing application.
 class InternalApplication {
     let window: Window
+    let loop: RunLoop
 
     /// Creates an application with given window mode and graphics context.
     init(
         with configuration: Application
     ) throws {
-        // Create platform handle, get every driver
+        // Initialize platform
         let platform = try createPlatform(
             initialWindowMode: configuration.initialWindowMode,
             initialGraphicsAPI: try configuration.initialGraphicsAPI ?? GraphicsAPI.findFirstAvailable(),
@@ -56,18 +57,30 @@ class InternalApplication {
 
         // Create window
         self.window = platform.window
+
+        // Create runloop
+        self.loop = RunLoop()
     }
 
     /// Runs the application until closed, either by the user
     /// or through exit().
     public func main() throws {
-        // Load window
+        // Create window
         do {
             try self.window.reload()
+
+            // Ensure the window has a Skia canvas
+            if self.window.canvas == nil {
+                throw WindowCreationError.noSkiaCanvas
+            }
         } catch {
             Logger.error("Could not create window: \(error)")
             throw error
         }
+
+        // Push main activity
+
+        // Start run loop
     }
 
     /// Requests the application to be exited. Returns when the app is fully

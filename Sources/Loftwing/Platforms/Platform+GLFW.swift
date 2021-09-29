@@ -17,11 +17,16 @@
 import Foundation
 
 import GLFW
+import Skia
 
 enum GLFWError: Error {
     case initFailed
     case noPrimaryMonitor
     case noVideoMode
+    case cannotCreateWindow
+    case cannotInitSkiaContext
+    case cannotInitSkiaTarget
+    case cannotInitSkiaSurface
 }
 
 /// GLFW as a platform, handling window and inputs.
@@ -53,7 +58,10 @@ class GLFWWindow: Window {
     let graphicsAPI: GraphicsAPI
     let title: String
 
-    var window: OpaquePointer? = nil
+    var window: OpaquePointer? = nil // GLFW window
+
+    var canvas: OpaquePointer? = nil // Skia canvas
+    var context: OpaquePointer? = nil // Skia context
 
     init(
         initialWindowMode windowMode: WindowMode,
@@ -65,17 +73,21 @@ class GLFWWindow: Window {
         self.title = title
     }
 
+    func beginFrame() {
+        glfwPollEvents()
+    }
+
+    func endFrame() {
+        gr_direct_context_flush(self.context)
+        glfwSwapBuffers(self.window)
+    }
+
     func reload() throws {
-        // TODO: teardown existing window instead
+        // TODO: teardown existing window + Skia instead
         if self.window != nil {
             Logger.error("Reloading not implemented on GLFW")
             abort()
         }
-
-        // Log
-        Logger.info("Creating window:")
-        Logger.info("   - Graphics API: \(self.graphicsAPI)")
-        Logger.info("   - Mode: \(self.windowMode)")
 
         // Setup hints
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
@@ -139,5 +151,73 @@ class GLFWWindow: Window {
                     nil
                 )
         }
+
+        if self.window == nil {
+            throw GLFWError.cannotCreateWindow
+        }
+
+        Logger.info("\(self.windowMode) window created")
+
+        // Initialize graphics API
+        glfwMakeContextCurrent(window)
+
+        switch self.graphicsAPI {
+            case .OpenGL:
+                glEnable(UInt32(GL_FRAMEBUFFER_SRGB))
+        }
+
+        var finalWindowWidth: Int32 = 0
+        var finalWindowHeight: Int32 = 0
+        glfwGetWindowSize(window, &finalWindowWidth, &finalWindowHeight)
+
+        // Initialize Skia
+        var backendRenderTarget: OpaquePointer? = nil
+
+        switch self.graphicsAPI {
+            case .OpenGL:
+                let interface = gr_glinterface_create_native_interface()
+                self.context = gr_direct_context_make_gl(interface)
+
+                var framebufferInfo = gr_gl_framebufferinfo_t(
+                    fFBOID: 0,
+                    fFormat: UInt32(GL_SRGB8_ALPHA8)
+                )
+
+                backendRenderTarget = gr_backendrendertarget_new_gl(
+                    finalWindowWidth,
+                    finalWindowHeight,
+                    0,
+                    0,
+                    &framebufferInfo
+                )
+        }
+
+        guard let context = self.context else {
+            throw GLFWError.cannotInitSkiaContext
+        }
+
+        guard let target = backendRenderTarget else {
+            throw GLFWError.cannotInitSkiaTarget
+        }
+
+        let surface = sk_surface_new_backend_render_target(
+            context,
+            target,
+            BOTTOM_LEFT_GR_SURFACE_ORIGIN,
+            RGBA_8888_SK_COLORTYPE,
+            sk_colorspace_new_srgb(),
+            nil
+        )
+
+        if surface == nil {
+            throw GLFWError.cannotInitSkiaSurface
+        }
+
+        Logger.info("\(self.graphicsAPI) Skia context created")
+
+        // Finalize init
+        glfwSwapInterval(1)
+
+        self.canvas = sk_surface_get_canvas(surface)
     }
 }
