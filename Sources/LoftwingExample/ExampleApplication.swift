@@ -16,8 +16,17 @@
 
 import Loftwing
 
-// This is the first activity to be pushed when the application
-// starts.
-class MainActivity: Activity {
-    
+// Declare a Loftwing application.
+struct ExampleApplication: Application {
+    // Application title
+    let title = "Loftwing Example Application"
+
+    // Initial window mode and size
+    let initialWindowMode = WindowMode.windowed(1280, 720)
+
+    // Initial graphics API, nil being "select automatically"
+    let initialGraphicsAPI: GraphicsAPI? = nil
+
+    // First activity to be pushed when the app starts
+    var mainActivity: Activity = MainActivity()
 }

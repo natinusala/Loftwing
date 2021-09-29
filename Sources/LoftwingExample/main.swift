@@ -14,18 +14,9 @@
     limitations under the License.
 */
 
-import Foundation
-
 import Loftwing
 
-struct ExampleApplication: Application {
-    let title = "Loftwing Example Application"
-    let initialWindowMode = WindowMode.windowed(1280, 720)
-    let initialGraphicsAPI: GraphicsAPI? = nil
-
-    var mainActivity: Activity = MainActivity()
-}
-
+// Create and run the application.
 do {
     let app = ExampleApplication()
     try app.main()
