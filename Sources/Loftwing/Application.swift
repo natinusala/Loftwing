@@ -14,52 +14,53 @@
     limitations under the License.
 */
 
-/// Application protocol. Implement these methods in your
-/// LoftwingApplication subclass.
-public protocol Application {
+/// A Loftwing application.
+open class Application {
     /// Application initial window mode.
-    var initialWindowMode: WindowMode { get }
+    open var initialWindowMode: WindowMode {
+        WindowMode.borderlessWindow
+    }
 
     /// Application initial graphics context. Use nil to autodetect and pick the
     /// first one that works.
-    var initialGraphicsAPI: GraphicsAPI? { get }
+    open var initialGraphicsAPI: GraphicsAPI? {
+        nil
+    }
 
     /// The first activity started by the application.
-    var mainActivity: Activity { get }
+    open var mainActivity: Activity? {
+        nil
+    }
 
     /// Application window title.
-    var title: String { get }
-}
-
-public extension Application {
-    /// Runs the application until closed, either by the user
-    /// or through exit().
-    func main() throws {
-        try InternalApplication(with: self).main()
+    open var title: String {
+        "Loftwing App"
     }
-}
 
-/// A Loftwing application.
-class InternalApplication {
-    let window: Window
-    let loop: RunLoop
+    var window: Window!
+    var platform: Platform!
 
-    /// Creates an application with given window mode and graphics context.
-    init(
-        with configuration: Application
-    ) throws {
+    var shouldStop = false
+    var stopCallback: (() -> ())? = nil
+
+    var activitiesStack: [Activity] = []
+
+    /// Creates an application.
+    public init() throws {
         // Initialize platform
-        let platform = try createPlatform(
-            initialWindowMode: configuration.initialWindowMode,
-            initialGraphicsAPI: try configuration.initialGraphicsAPI ?? GraphicsAPI.findFirstAvailable(),
-            initialTitle: configuration.title
+        self.platform = try createPlatform(
+            initialWindowMode: self.initialWindowMode,
+            initialGraphicsAPI: try self.initialGraphicsAPI ?? GraphicsAPI.findFirstAvailable(),
+            initialTitle: self.title
         )
 
         // Create window
-        self.window = platform.window
+        self.window = self.platform.window
 
-        // Create runloop
-        self.loop = RunLoop()
+        // Push main activity
+        if let mainActivity = self.mainActivity {
+            self.activitiesStack = [mainActivity]
+        }
     }
 
     /// Runs the application until closed, either by the user
@@ -78,14 +79,50 @@ class InternalApplication {
             throw error
         }
 
-        // Push main activity
+        // Main loop
+        while(true) {
+            // Poll platform, see if we should exit
+            if self.platform.poll() || self.shouldStop {
+                // Exit
+                Logger.info("Exiting...")
 
-        // Start run loop
+                // Call stop callback
+                if let cb = stopCallback {
+                    cb()
+                }
+
+                // TODO: Deinit stuff
+
+                // Break the loop to exit
+                break
+            }
+
+            // Draw activities
+            // TODO: do it better (see borealis)
+            for activity in activitiesStack {
+                activity.frame()
+            }
+
+            // Finally swap buffers
+            self.window.swapBuffers()
+        }
     }
 
     /// Requests the application to be exited. Returns when the app is fully
     /// exited and the window is closed.
     public func exit() async {
-        // TODO: do it
+        await withUnsafeContinuation { continuation in
+            self.exit {
+                continuation.resume()
+            }
+        }
+    }
+
+    /// Requests the application to be exited. Runs the given callback when the app is fully
+    /// exited and the window is closed.
+    public func exit(callback: @escaping () -> ()) {
+        // TODO: call onExit event when the event loop is made - turn exit into an event?
+        self.stopCallback = callback
+        self.shouldStop = true
     }
 }

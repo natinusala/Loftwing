@@ -14,7 +14,16 @@
     limitations under the License.
 */
 
-/// An activity is the higher level building block of an application.
+/// An activity is the higher level building block of an application UI.
 /// It corresponds to a "screen" the user can enter and exit. An application
-// is made of a stack of activity.
-public protocol Activity {}
+/// is made of a stack of activity.
+open class Activity {
+    public init() {
+
+    }
+
+    /// Runs one frame of the activity.
+    func frame() {
+
+    }
+}

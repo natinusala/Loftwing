@@ -41,6 +41,10 @@ protocol Platform {
 
     /// Current window handle.
     var window: Window { get }
+
+    /// Called before every frame begins to poll events and prepare the frame.
+    /// Must return true if the application should exit.
+    func poll() -> Bool
 }
 
 /// The window mode of an application.
@@ -83,9 +87,6 @@ protocol Window {
     /// will be created in its place (using the same configuration).
     func reload() throws
 
-    /// Called before every frame begins.
-    func beginFrame()
-
-    /// Called before every frame ends.
-    func endFrame()
+    /// Called at the end of every frame
+    func swapBuffers()
 }

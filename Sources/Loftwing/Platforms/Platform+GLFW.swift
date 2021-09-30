@@ -14,8 +14,6 @@
     limitations under the License.
 */
 
-import Foundation
-
 import GLFW
 import Skia
 
@@ -31,7 +29,11 @@ enum GLFWError: Error {
 
 /// GLFW as a platform, handling window and inputs.
 class GLFWPlatform: Platform {
-    let window: Window
+    let glfwWindow: GLFWWindow
+
+    var window: Window {
+        return self.glfwWindow
+    }
 
     required init(
         initialWindowMode windowMode: WindowMode,
@@ -44,11 +46,16 @@ class GLFWPlatform: Platform {
         }
 
         // Create the window
-        self.window = try GLFWWindow(
+        self.glfwWindow = try GLFWWindow(
             initialWindowMode: windowMode,
             initialGraphicsAPI: graphicsAPI,
             initialTitle: title
         )
+    }
+
+    func poll() -> Bool {
+        glfwPollEvents()
+        return self.glfwWindow.shouldClose()
     }
 }
 
@@ -73,20 +80,16 @@ class GLFWWindow: Window {
         self.title = title
     }
 
-    func beginFrame() {
-        glfwPollEvents()
-    }
-
-    func endFrame() {
+    func swapBuffers() {
         gr_direct_context_flush(self.context)
         glfwSwapBuffers(self.window)
     }
 
     func reload() throws {
-        // TODO: teardown existing window + Skia instead
+        // TODO: teardown existing window + Skia instead of aborting
         if self.window != nil {
             Logger.error("Reloading not implemented on GLFW")
-            abort()
+            fatalError()
         }
 
         // Setup hints
@@ -219,5 +222,9 @@ class GLFWWindow: Window {
         glfwSwapInterval(1)
 
         self.canvas = sk_surface_get_canvas(surface)
+    }
+
+    func shouldClose() -> Bool {
+        return glfwWindowShouldClose(self.window) == 1
     }
 }
