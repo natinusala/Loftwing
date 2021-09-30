@@ -14,9 +14,25 @@
     limitations under the License.
 */
 
-import Loftwing
+/// The "main" layer of an app: the activities stack.
+class ActivitiesStackLayer: Layer {
+    var stack: [Activity]
 
-// This is the first activity to be pushed when the application
-// starts.
-class MainActivity: Activity {
+    init(mainActivity main: Activity?) {
+        // Start with main activity or nothing (empty app)
+        if let mainActivity = main {
+            self.stack = [mainActivity]
+        }
+        else {
+            self.stack = []
+        }
+    }
+
+    func frame() {
+        // Draw all activities
+        // TODO: do it better (see brls)
+        for activity in self.stack {
+            activity.frame()
+        }
+    }
 }

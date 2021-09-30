@@ -43,7 +43,7 @@ open class Application {
     var shouldStop = false
     var stopCallback: (() -> ())? = nil
 
-    var activitiesStack: [Activity] = []
+    var layers: [Layer] = []
 
     /// Creates an application.
     public init() throws {
@@ -57,10 +57,11 @@ open class Application {
         // Create window
         self.window = self.platform.window
 
-        // Push main activity
-        if let mainActivity = self.mainActivity {
-            self.activitiesStack = [mainActivity]
-        }
+        // Create layers
+        self.layers = [
+            ActivitiesStackLayer(mainActivity: self.mainActivity)
+            // TODO: OverlayLayer
+        ]
     }
 
     /// Runs the application until closed, either by the user
@@ -97,10 +98,9 @@ open class Application {
                 break
             }
 
-            // Draw activities
-            // TODO: do it better (see borealis)
-            for activity in activitiesStack {
-                activity.frame()
+            // Draw layers
+            for layer in self.layers {
+                layer.frame()
             }
 
             // Finally swap buffers

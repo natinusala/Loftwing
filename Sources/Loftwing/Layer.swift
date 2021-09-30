@@ -14,9 +14,10 @@
     limitations under the License.
 */
 
-import Loftwing
-
-// This is the first activity to be pushed when the application
-// starts.
-class MainActivity: Activity {
+/// An app is made of multiple layers. Unlike activities, layers are not
+/// dynamic - the layers are defined once when the app is created but cannot
+/// be pushed or popped.
+protocol Layer {
+    /// Runs the layer for one frame.
+    func frame()
 }

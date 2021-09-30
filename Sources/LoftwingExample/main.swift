@@ -17,9 +17,4 @@
 import Loftwing
 
 // Create and run the application.
-do {
-    let app = try ExampleApplication()
-    try app.main()
-} catch {
-    Logger.error("Could not run application: \(error)")
-}
+try! ExampleApplication().main()

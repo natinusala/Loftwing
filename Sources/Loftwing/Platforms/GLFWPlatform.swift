@@ -159,7 +159,7 @@ class GLFWWindow: Window {
             throw GLFWError.cannotCreateWindow
         }
 
-        Logger.info("\(self.windowMode) window created")
+        Logger.info("Created \(self.windowMode) window")
 
         // Initialize graphics API
         glfwMakeContextCurrent(window)
@@ -216,7 +216,7 @@ class GLFWWindow: Window {
             throw GLFWError.cannotInitSkiaSurface
         }
 
-        Logger.info("\(self.graphicsAPI) Skia context created")
+        Logger.info("Created \(self.graphicsAPI) Skia context")
 
         // Finalize init
         glfwSwapInterval(1)
