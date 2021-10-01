@@ -60,7 +60,7 @@ open class Application {
         // Create layers
         self.layers = [
             ActivitiesStackLayer(mainActivity: self.mainActivity)
-            // TODO: OverlayLayer
+            // TODO: OverlayLayer, which is a subclass of ViewLayer
         ]
     }
 

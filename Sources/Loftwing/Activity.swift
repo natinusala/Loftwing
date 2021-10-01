@@ -22,7 +22,7 @@ open class Activity {
 
     }
 
-    /// Runs one frame of the activity.
+    /// Runs the activity for one frame.
     func frame() {
 
     }
