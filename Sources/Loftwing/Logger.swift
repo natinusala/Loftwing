@@ -16,7 +16,7 @@
 
 import Rainbow
 
-public struct Logger {
+public actor Logger {
     // TODO: implement log levels
     // TODO: implement "labels" so that apps can enable / disable Loftwing logs
 
@@ -28,5 +28,12 @@ public struct Logger {
     /// Logs an error message.
     public static func error(_ message: String) {
         print("\("[ERROR]".red) \(message)")
+    }
+
+    /// Logs a debug message.
+    public static func debug(_ message: String) {
+        #if LOFTWING_DEBUG
+            print("\("[DEBUG]".green) \(message)")
+        #endif
     }
 }

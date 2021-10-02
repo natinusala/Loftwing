@@ -14,7 +14,11 @@
     limitations under the License.
 */
 
-import Loftwing
-
-// Create and run the application.
-try! ExampleApplication().main()
+public extension Array where Element: Equatable {
+    /// Removes the first occurence of the given element from the array.
+    mutating func removeFirst(_ element: Element) {
+        if let index = self.firstIndex(of: element) {
+            self.remove(at: index)
+        }
+    }
+}

@@ -28,8 +28,8 @@ open class Application {
     }
 
     /// The first activity started by the application.
-    open var mainActivity: Activity? {
-        nil
+    open var mainActivity: Activity {
+        EmptyActivity()
     }
 
     /// Application window title.
@@ -43,6 +43,7 @@ open class Application {
     var shouldStop = false
     var stopCallback: (() -> ())? = nil
 
+    let activitiesStackLayer = ActivitiesStackLayer()
     var layers: [Layer] = []
 
     /// Creates an application.
@@ -59,14 +60,14 @@ open class Application {
 
         // Create layers
         self.layers = [
-            ActivitiesStackLayer(mainActivity: self.mainActivity)
+            self.activitiesStackLayer
             // TODO: OverlayLayer, which is a subclass of ViewLayer
         ]
     }
 
     /// Runs the application until closed, either by the user
     /// or through exit().
-    public func main() throws {
+    public func main() async throws {
         // Create window
         do {
             try self.window.reload()
@@ -80,7 +81,11 @@ open class Application {
             throw error
         }
 
+        // Push main activity
+        await self.activitiesStackLayer.push(activity: self.mainActivity)
+
         // Main loop
+        let queue = TaskQueue.sharedInstance
         while(true) {
             // Poll platform, see if we should exit
             if self.platform.poll() || self.shouldStop {
@@ -103,8 +108,15 @@ open class Application {
                 layer.frame()
             }
 
-            // Finally swap buffers
+            // Swap buffers
             self.window.swapBuffers()
+
+            // Sleep between frames
+            // TODO: sleep better with dynamic rate control
+            await Task.sleep(16666666)
+
+            // Collect tasks
+            await queue.collect()
         }
     }
 

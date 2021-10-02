@@ -14,16 +14,51 @@
     limitations under the License.
 */
 
-/// An activity is the higher level building block of an application UI.
-/// It corresponds to a "screen" the user can enter and exit. An application
-/// is made of a stack of activity.
+/// An activity corresponds to a "screen" the user can enter and exit.
+/// An application is made of a stack of activity.
+///
+/// Each activity contains one top-level view. You can define it by redefining
+/// the content property.
 open class Activity {
-    public init() {
+    /// The top-level view of that activity.
+    open var content: View {
+        EmptyView()
+    }
 
+    var mountedContent: View? = nil
+
+    let creationEvent = Event<Void>()
+
+    public init() {
+        // Register to our own creation event
+        self.creationEvent.observe {
+            await self.onCreate()
+        }
     }
 
     /// Runs the activity for one frame.
     func frame() {
 
+    }
+
+    /// Executed once when the activity is created.
+    open func onCreate() async {}
+
+    /// Creates the content tree and stores it in the activity.
+    func mountContent() {
+        // Never mount content twice
+        if self.mountedContent != nil {
+            Logger.error("Cannot mount activity content twice")
+            fatalError()
+        }
+
+        self.mountedContent = self.content
+    }
+}
+
+/// An empty activity.
+class EmptyActivity: Activity {
+    override var content: View {
+        EmptyView()
     }
 }

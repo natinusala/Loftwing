@@ -34,7 +34,7 @@ class ExampleApplication: Application {
     }
 
     // First activity to be pushed when the app starts
-    override var mainActivity: Activity? {
+    override var mainActivity: Activity {
         MainActivity()
     }
 }

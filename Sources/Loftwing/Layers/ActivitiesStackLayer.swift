@@ -16,17 +16,7 @@
 
 /// The "main" layer of an app: the activities stack.
 class ActivitiesStackLayer: Layer {
-    var stack: [Activity]
-
-    init(mainActivity main: Activity?) {
-        // Start with main activity or nothing (empty app)
-        if let mainActivity = main {
-            self.stack = [mainActivity]
-        }
-        else {
-            self.stack = []
-        }
-    }
+    var stack: ActivitiesStack = ActivitiesStack()
 
     func frame() {
         // Draw all activities
@@ -34,5 +24,32 @@ class ActivitiesStackLayer: Layer {
         for activity in self.stack {
             activity.frame()
         }
+    }
+
+    /// Pushes an activity on the stack.
+    func push(activity: Activity) async {
+        await self.stack.push(activity: activity)
+    }
+}
+
+/// Responsible for pushing and popping activities from the stack, as well
+/// as handling activities lifecycles.
+class ActivitiesStack: Sequence {
+    var stack: [Activity] = []
+
+    func push(activity: Activity) async {
+        self.stack.append(activity)
+
+        // Set activity content view
+        activity.mountContent()
+
+        // Fire creation event
+        await activity.creationEvent.fire()
+    }
+
+    typealias Iterator = Array<Activity>.Iterator
+    typealias Element = Activity
+    func makeIterator() -> Iterator {
+        return self.stack.makeIterator()
     }
 }

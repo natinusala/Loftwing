@@ -16,10 +16,10 @@
 
 import Loftwing
 
-// This is the first activity to be pushed when the application
-// starts.
-class MainActivity: Activity {
-    override public func onCreate() async {
-        Logger.info("Example main activity created")
+// Create and run the application.
+@main
+struct Main {
+    public static func main() async {
+        try! await ExampleApplication().main()
     }
 }
