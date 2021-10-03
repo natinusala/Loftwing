@@ -31,6 +31,11 @@ public struct Color {
             (UInt32(blue) << 0)
     }
 
+    /// Creates a color with given ARGB UInt32 value.
+    public init(_ value: UInt32) {
+        self.value = value
+    }
+
     public static let white: Color = Color(255, 255, 255)
     public static let black: Color = Color(0, 0, 0)
     public static let red: Color = Color(255, 0, 0)
