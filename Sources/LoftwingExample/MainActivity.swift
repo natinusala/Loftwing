@@ -19,6 +19,12 @@ import Loftwing
 // This is the first activity to be pushed when the application
 // starts.
 class MainActivity: Activity {
+    @ViewBinding var myEmptyView: EmptyView?
+
+    override var content: View {
+        EmptyView().bind($myEmptyView)
+    }
+
     override public func onCreate() async {
         Logger.info("Example main activity created")
     }

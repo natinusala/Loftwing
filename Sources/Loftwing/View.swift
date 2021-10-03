@@ -14,13 +14,51 @@
     limitations under the License.
 */
 
+public protocol BindableView {
+    associatedtype ViewType: View
+
+    func bind(_ binding: ViewBinding<ViewType>) -> ViewType
+}
+
 /// A view is the basic building block of an application's UI.
 /// The whole UI is made of a tree of views.
 open class View {
+    public init() {}
+}
 
+/// Allows to get a handle of a view inside a view or inside an activity.
+/// Use the projected value ($ operator) with the .bind() method of any
+/// view to get its handle.
+@propertyWrapper
+public class ViewBinding<WrappedType: View> {
+    var view: WrappedType?
+
+    public init() {
+        self.view = nil
+    }
+
+    public init(view: WrappedType?) {
+        self.view = view
+    }
+
+    public var wrappedValue: WrappedType? {
+        self.view
+    }
+
+    public var projectedValue: ViewBinding<WrappedType> {
+        return self
+    }
+
+    public func bind(_ view: WrappedType) -> WrappedType {
+        self.view = view
+        return view
+    }
 }
 
 /// An empty view.
-public class EmptyView: View {
-
+public class EmptyView: View, BindableView {
+    public typealias ViewType = EmptyView
+    public func bind(_ binding: ViewBinding<ViewType>) -> EmptyView {
+        return binding.bind(self)
+    }
 }
