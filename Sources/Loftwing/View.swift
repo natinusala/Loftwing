@@ -15,9 +15,9 @@
 */
 
 public protocol BindableView {
-    associatedtype ViewType: View
+    associatedtype BindType: View
 
-    func bind(_ binding: ViewBinding<ViewType>) -> ViewType
+    func bind(_ binding: ViewBinding<BindType>) -> BindType
 }
 
 /// A view is the basic building block of an application's UI.
@@ -57,8 +57,8 @@ public class ViewBinding<WrappedType: View> {
 
 /// An empty view.
 public class EmptyView: View, BindableView {
-    public typealias ViewType = EmptyView
-    public func bind(_ binding: ViewBinding<ViewType>) -> EmptyView {
+    public typealias BindType = EmptyView
+    public func bind(_ binding: ViewBinding<BindType>) -> BindType {
         return binding.bind(self)
     }
 }

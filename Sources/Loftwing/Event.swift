@@ -215,42 +215,48 @@ class TaskQueue {
     /// Collects finished tasks, running their finished callback, and cancels
     /// all tasks with pending cancellation.
     func collect() async {
-        // Cancel all tasks that need to be cancelled
-        for handle in self.tasks {
-            // This can fail if we don't have a handle to the current task yet
-            // in which case the cancel will be retried at next collect call
-            if await handle.value.status == .cancelRequested {
-                if let task = await handle.value.task {
-                    task.cancel()
-                    await handle.value.setStatus(.cancelling)
-                    Logger.debug("Requested cancellation of task \(handle.value.uuid)")
-                }
-            }
-        }
-
-        // Remove every finished and cancelled tasks
+        // Remove every finished, cancelled and dead tasks
         var newTasks: [WeakHandle] = []
         for task in self.tasks {
-            let isFinished = await task.value.status == .finished
-            let isCancelled = await task.value.cancelled
+            // Check if the weak ptr is still valid
+            // This also gets a "strong" pointer to the task while we need it
+            // since the finished callback
+            // might destroy the task (we are only holding weak references)
+            if let handle = task.value {
+                let isFinished = await handle.status == .finished
+                let isCancelled = await handle.cancelled
 
-            if !isFinished && !isCancelled {
-                newTasks.append(task)
-            } else {
-                // Get a strong handle to the task and use it, since the finished callback
-                // might destroy the task (we are only holding weak references)
-                let strongTask = task.value!
+                if !isFinished && !isCancelled {
+                    newTasks.append(task)
+                } else {
+                    // Run the "finish callback"
+                    Logger.debug("Running task \(handle.uuid) finished callback")
+                    if let cb = await handle.finishCallback {
+                        cb(handle)
+                    }
 
-                // Run the "finish callback"
-                Logger.debug("Running task \(strongTask.uuid) finished callback")
-                if let cb = await strongTask.finishCallback {
-                    cb(strongTask)
+                    Logger.debug("Task \(handle.uuid) finished")
                 }
-
-                Logger.debug("Task \(strongTask.uuid) finished")
             }
 
             self.tasks = newTasks
+        }
+
+        // Cancel all tasks that need to be cancelled
+        for weakHandle in self.tasks {
+            // Ensure the handle is still valid
+            // If not, it will be collected on next frame
+            if let handle = weakHandle.value {
+                // This can fail if we don't have a handle to the current task yet
+                // in which case the cancel will be retried at next collect call
+                if await handle.status == .cancelRequested {
+                    if let task = await handle.task {
+                        task.cancel()
+                        await handle.setStatus(.cancelling)
+                        Logger.debug("Requested cancellation of task \(handle.uuid)")
+                    }
+                }
+            }
         }
     }
 }
