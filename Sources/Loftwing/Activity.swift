@@ -19,7 +19,7 @@
 ///
 /// Each activity contains one top-level view. You can define it by redefining
 /// the content property.
-open class Activity {
+open class Activity: FrameProtocol {
     /// The top-level view of that activity.
     open var content: View {
         EmptyView()
@@ -37,8 +37,11 @@ open class Activity {
     }
 
     /// Runs the activity for one frame.
-    func frame() {
-
+    public func frame(canvas: Canvas) {
+        // Draw the mounted view.
+        if let mountedView = self.mountedContent {
+            mountedView.frame(canvas: canvas)
+        }
     }
 
     /// Executed once when the activity is created.

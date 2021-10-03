@@ -25,12 +25,18 @@ public actor Logger {
         print("\("[INFO]".blue) \(message)")
     }
 
+    /// Logs a warning message.
+    public static func warning(_ message: String) {
+        print("\("[WARNING]".yellow) \(message)")
+    }
+
     /// Logs an error message.
     public static func error(_ message: String) {
         print("\("[ERROR]".red) \(message)")
     }
 
-    /// Logs a debug message.
+    /// Logs a debug message. Only works if the app was compiled with
+    /// LOFTWING_DEBUG flag.
     public static func debug(_ message: String) {
         #if LOFTWING_DEBUG
             print("\("[DEBUG]".green) \(message)")

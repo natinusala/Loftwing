@@ -18,11 +18,12 @@
 class ActivitiesStackLayer: Layer {
     var stack: ActivitiesStack = ActivitiesStack()
 
-    func frame() {
+    func frame(canvas: Canvas) {
         // Draw all activities
         // TODO: do it better (see brls)
         for activity in self.stack {
-            activity.frame()
+            // TODO: saveLayer and restore?
+            activity.frame(canvas: canvas)
         }
     }
 

@@ -15,6 +15,7 @@
 */
 
 /// A Loftwing application.
+@MainActor
 open class Application {
     /// Application initial window mode.
     open var initialWindowMode: WindowMode {
@@ -45,6 +46,8 @@ open class Application {
 
     let activitiesStackLayer = ActivitiesStackLayer()
     var layers: [Layer] = []
+
+    let clearPaint = Paint(color: Color.black)
 
     /// Creates an application.
     public init() throws {
@@ -103,9 +106,13 @@ open class Application {
                 break
             }
 
+            // Clear in black
+            self.window.canvas!.drawPaint(self.clearPaint)
+
             // Draw layers
             for layer in self.layers {
-                layer.frame()
+                // TODO: saveLayer and restore?
+                layer.frame(canvas: self.window.canvas!)
             }
 
             // Swap buffers

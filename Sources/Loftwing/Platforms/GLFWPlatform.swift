@@ -22,9 +22,6 @@ enum GLFWError: Error {
     case noPrimaryMonitor
     case noVideoMode
     case cannotCreateWindow
-    case cannotInitSkiaContext
-    case cannotInitSkiaTarget
-    case cannotInitSkiaSurface
 }
 
 /// GLFW as a platform, handling window and inputs.
@@ -40,6 +37,16 @@ class GLFWPlatform: Platform {
         initialGraphicsAPI graphicsAPI: GraphicsAPI,
         initialTitle title: String
     ) throws {
+        // Set error callback
+        glfwSetErrorCallback {code, error in
+            if let errorString = error {
+                Logger.error("GLFW error \(code): \(errorString)")
+            }
+            else {
+                Logger.error("GLFW error \(code): unknown")
+            }
+        }
+
         // Init GLFW
         if glfwInit() != GLFW_TRUE {
             throw GLFWError.initFailed
@@ -67,7 +74,7 @@ class GLFWWindow: Window {
 
     var window: OpaquePointer? = nil // GLFW window
 
-    var canvas: OpaquePointer? = nil // Skia canvas
+    var canvas: Canvas? = nil // Skia canvas
     var context: OpaquePointer? = nil // Skia context
 
     init(
@@ -196,11 +203,11 @@ class GLFWWindow: Window {
         }
 
         guard let context = self.context else {
-            throw GLFWError.cannotInitSkiaContext
+            throw SkiaError.cannotInitSkiaContext
         }
 
         guard let target = backendRenderTarget else {
-            throw GLFWError.cannotInitSkiaTarget
+            throw SkiaError.cannotInitSkiaTarget
         }
 
         let surface = sk_surface_new_backend_render_target(
@@ -213,7 +220,7 @@ class GLFWWindow: Window {
         )
 
         if surface == nil {
-            throw GLFWError.cannotInitSkiaSurface
+            throw SkiaError.cannotInitSkiaSurface
         }
 
         Logger.info("Created \(self.graphicsAPI) Skia context")
@@ -221,8 +228,14 @@ class GLFWWindow: Window {
         // Finalize init
         glfwSwapInterval(1)
 
-        self.canvas = sk_surface_get_canvas(surface)
+        guard let nativeCanvas = sk_surface_get_canvas(surface) else {
+            throw SkiaError.cannotInitSkiaCanvas
+        }
+
+        self.canvas = Canvas(nativeCanvas: nativeCanvas)
     }
+
+    // TODO: glfwDestroyWindow + glfwTerminate
 
     func shouldClose() -> Bool {
         return glfwWindowShouldClose(self.window) == 1

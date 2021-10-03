@@ -14,6 +14,14 @@
     limitations under the License.
 */
 
+/// Errors that can happen when Skia is initialized.
+public enum SkiaError: Error {
+    case cannotInitSkiaContext
+    case cannotInitSkiaTarget
+    case cannotInitSkiaSurface
+    case cannotInitSkiaCanvas
+}
+
 /// Selects and creates the platform to use for an application.
 func createPlatform(
     initialWindowMode windowMode: WindowMode,
@@ -78,8 +86,8 @@ public enum GraphicsAPI {
 
 /// Represents an application window.
 protocol Window {
-    /// Skia canvas pointer.
-    var canvas: OpaquePointer? { get }
+    /// Graphics canvas.
+    var canvas: Canvas? { get }
 
     /// Loads or reloads the window. If called for the first time, will create
     /// and open a new window. If called when a window already exists, the existing

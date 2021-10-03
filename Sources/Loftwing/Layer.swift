@@ -17,7 +17,11 @@
 /// An app is made of multiple layers. Unlike activities, layers are not
 /// dynamic - the layers are defined once when the app is created but cannot
 /// be pushed or popped.
-protocol Layer {
-    /// Runs the layer for one frame.
-    func frame()
+public protocol Layer: FrameProtocol {
+}
+
+/// Protocol for anything that has a `frame` method: layers, views, activities...
+public protocol FrameProtocol {
+    /// Runs for one frame.
+    func frame(canvas: Canvas)
 }
