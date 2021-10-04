@@ -16,17 +16,18 @@
 
 import Loftwing
 
-// This is the first activity to be pushed when the application
-// starts.
-class MainActivity: Activity {
+// A custom view always inherits Box or View.
+class CustomView: Box {
+    // Since we are inheriting box, we can use the `content` property
+    // to "inflate" ourselves with the desired content. We use the `self.box(builder:)`
+    // method for that.
     override var content: View {
-        Box {
-            Rectangle(color: Color.white)
-            CustomView()
+        self.box {
+            EmptyView()
+            EmptyView()
+            Box {
+                EmptyView()
+            }
         }
-    }
-
-    override public func onCreate() async {
-        Logger.info("Example main activity created")
     }
 }

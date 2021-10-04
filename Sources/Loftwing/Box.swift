@@ -20,9 +20,41 @@
 open class Box: View {
     var children: [View] = []
 
+    /// The content of that box, statically defined.
+    /// Used when creating custom views.
+    open var content: View {
+        EmptyView()
+    }
+
     /// Creates a box with the given children.
     public init(@BoxBuilder builder: () -> [View]) {
+        super.init()
+
+        self.box(builder: builder)
+    }
+
+    /// Creates a box with content taken from its `content` property.
+    override public init() {
+        super.init()
+
+        // Calling self.content will automatically inflate self.children
+        // if box(builder:) is called at any point
+        if let content = self.content as? Box {
+            if content !== self {
+                fatalError("Box content returned another view than itself")
+            }
+        }
+        else {
+            fatalError("Box content returned another view than itself")
+        }
+    }
+
+    /// Inflates the box with the given content. Use with the `content`
+    /// property when creating custom views.
+    @discardableResult
+    public func box(@BoxBuilder builder: () -> [View]) -> Box {
         self.children = builder()
+        return self
     }
 
     open override func frame(canvas: Canvas) {
