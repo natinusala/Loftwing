@@ -21,8 +21,13 @@ import Loftwing
 class MainActivity: Activity {
     override var content: View {
         Box {
-            Rectangle(color: Color.white)
-            CustomView()
+            Rectangle(color: Color.red)
+                .grow(1)
+            Rectangle(color: Color.blue)
+                .grow(1)
+            Rectangle(color: Color.green)
+                .grow(1)
+            // CustomView()
         }
     }
 

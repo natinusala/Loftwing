@@ -28,4 +28,21 @@ public class Canvas {
     public func drawPaint(_ paint: Paint) {
         sk_canvas_draw_paint(self.native, paint.native)
     }
+
+    /// Draws the given paint in the given rectangle region.
+    public func drawRect(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        paint: Paint
+    ) {
+        var rect = sk_rect_t(left: x, top: y, right: x + width, bottom: y + height)
+
+        sk_canvas_draw_rect(
+            self.native,
+            &rect,
+            paint.native
+        )
+    }
 }

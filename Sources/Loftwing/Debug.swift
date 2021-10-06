@@ -14,17 +14,11 @@
     limitations under the License.
 */
 
-/// An app is made of multiple layers. Unlike activities, layers are not
-/// dynamic - the layers are defined once when the app is created but cannot
-/// be pushed or popped.
-public protocol Layer: FrameProtocol {
-    /// Triggered when the window size changes so that the layer can resize itself
-    /// to given dimensions.
-    func resizeToFit(width: Float, height: Float)
-}
+// Those flags are used to toggle debug messages of various components of the
+// library at compile time. Please set them all to `false` before commiting.
 
-/// Protocol for anything that has a `frame` method: layers, views, activities...
-public protocol FrameProtocol {
-    /// Runs for one frame.
-    func frame(canvas: Canvas)
-}
+/// Set to `true` to enable debug messages of the layout engine.
+let debugLayout = true
+
+/// Set to `true` to enable debug message of events and tasks.
+let debugEvents = false

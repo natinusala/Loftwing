@@ -77,6 +77,9 @@ class GLFWWindow: Window {
     var canvas: Canvas? = nil // Skia canvas
     var context: OpaquePointer? = nil // Skia context
 
+    var width: Float = 0
+    var height: Float = 0
+
     init(
         initialWindowMode windowMode: WindowMode,
         initialGraphicsAPI graphicsAPI: GraphicsAPI,
@@ -179,6 +182,9 @@ class GLFWWindow: Window {
         var finalWindowWidth: Int32 = 0
         var finalWindowHeight: Int32 = 0
         glfwGetWindowSize(window, &finalWindowWidth, &finalWindowHeight)
+
+        self.width = Float(finalWindowWidth)
+        self.height = Float(finalWindowHeight)
 
         // Initialize Skia
         var backendRenderTarget: OpaquePointer? = nil

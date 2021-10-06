@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-import Skia // TODO: remove
+import Yoga
 
 /// Protocol for bindable views. Set the BindType typealias to yourself, then
 /// write `return binding.bind(self)` in `bind(_ binding:)`.
@@ -29,11 +29,86 @@ public protocol BindableView {
 /// A view is the basic building block of an application's UI.
 /// The whole UI is made of a tree of views.
 open class View: FrameProtocol {
-    public init() {}
+    let ygNode: YGNodeRef
+
+    var parent: View? = nil {
+        willSet(newParent) {
+            if self.parent != nil {
+                fatalError("Cannot attach a view to multiple parents")
+            }
+        }
+    }
+
+    // If set to true, the view will be laid out again at next frame.
+    var dirty = false
+
+    /// Position of the view on the X axis.
+    private(set) var x: Float = 0
+
+    /// Position of the view on the Y axis.
+    private(set) var y: Float = 0
+
+    /// Width of the view.
+    private(set) var width: Float = 0
+
+    /// Height of the view.
+    private(set) var height: Float = 0
+
+    /// Called by the parent view when their layout changes.
+    /// Discards calculated layout properties so that they will be
+    /// calculated again the next time we request them (usually next frame).
+    open func onLayoutChanged(parentX: Float, parentY: Float) {
+        self.x = parentX + YGNodeLayoutGetLeft(self.ygNode)
+        self.y = parentY + YGNodeLayoutGetTop(self.ygNode)
+        self.width = YGNodeLayoutGetWidth(self.ygNode)
+        self.height = YGNodeLayoutGetHeight(self.ygNode)
+
+        self.dirty = false
+
+        Logger.debug(
+            debugLayout, (
+                "\(self) layout validated, new dimensions are (\(self.x),\(self.y)), " +
+                "width and height are (\(self.width), \(self.height))"
+            )
+        )
+    }
+
+    /// Called at the beginning of a frame when the view is dirty. Recalculates
+    /// the layout and propagates the change through the whole tree if needed.
+    open func layout() {
+        // Don't layout if we have a parent, instead wait for our parent to layout
+        if self.parent != nil {
+            return
+        }
+
+        Logger.debug(debugLayout, "\(self) layout triggered")
+
+        // Calculate the new layout
+        YGNodeCalculateLayout(self.ygNode, YGUndefined, YGUndefined, YGDirectionLTR)
+
+        // Mark ourselves as clean again
+        // Use 0,0 as parent coordinates since we are guaranteed to be the
+        // top-most view in the tree
+        self.onLayoutChanged(parentX: 0, parentY: 0)
+    }
+
+    public init() {
+        self.ygNode = YGNodeNew()
+    }
 
     /// Called every frame. Do not override to draw your view's content, override
     /// `draw()` instead.
     open func frame(canvas: Canvas) {
+        // Layout if needed
+        if self.dirty {
+            self.layout()
+        }
+
+        // Don't do anything if the view size is 0
+        if self.width == 0 || self.height == 0 {
+            return
+        }
+
         // Draw the view
         self.draw(canvas: canvas)
     }
@@ -41,7 +116,68 @@ open class View: FrameProtocol {
     /// Called every frame to draw the view onscreen. Views may not draw outside of
     /// their bounds, they can be clipped if they do so.
     open func draw(canvas: Canvas) {
+        // Does nothing by default
+    }
 
+    /// Invalidates the view, triggering a layout recalculation of the whole view tree
+    /// starting from the top-most parent.
+    func invalidateLayout() {
+        // TODO: mark the yoga node as dirty (why?)
+
+        // Invalidate every view of the tree, going upwards from this one
+        // The point is that the top-most view will be laid out at next frame
+        // marking every child as clean again
+        if let parent = self.parent {
+            parent.invalidateLayout()
+        }
+        // We are the top-most view, invalidate ourselves
+        else {
+            // Invalidate ourselves
+            Logger.debug(debugLayout, "\(self) layout invalidated")
+            self.dirty = true
+        }
+    }
+
+    /// Sets requested dimensions of the view. Use nil to let Loftwing decide the
+    /// dimensions for you.
+    func setRequestedDimensions(width: Float?, height: Float?) {
+        YGNodeStyleSetMinWidthPercent(self.ygNode, 0)
+        YGNodeStyleSetMinHeightPercent(self.ygNode, 0)
+
+        // TODO: call setRequestedWidth / setRequestedHeight instead
+        if let width = width {
+            YGNodeStyleSetWidth(self.ygNode, width)
+            YGNodeStyleSetMinWidth(self.ygNode, width)
+        }
+        else {
+            YGNodeStyleSetWidthAuto(self.ygNode)
+            YGNodeStyleSetMinWidth(self.ygNode, YGUndefined)
+        }
+
+        if let height = height {
+            YGNodeStyleSetHeight(self.ygNode, height)
+            YGNodeStyleSetMinHeight(self.ygNode, height)
+        } else {
+            YGNodeStyleSetHeightAuto(self.ygNode)
+            YGNodeStyleSetMinHeight(self.ygNode, YGUndefined)
+        }
+
+        self.invalidateLayout()
+    }
+
+    /// Sets the grow factor of the view, aka how much of the remaining space
+    /// it should take in its parent box axis.
+    /// Opposite of shrink.
+    /// Default is 0%.
+    // TODO: change to percentage or tell that values are between 0 and 1 + add a check in the function
+    public func grow(_ factor: Float) -> Self {
+        YGNodeStyleSetFlexGrow(self.ygNode, factor)
+        self.invalidateLayout()
+        return self
+    }
+
+    deinit {
+        YGNodeFree(self.ygNode)
     }
 }
 
@@ -101,8 +237,14 @@ public class Rectangle: View, BindableView {
     }
 
     open override func draw(canvas: Canvas) {
-        // TODO: draw a rect instead
-        canvas.drawPaint(self.paint)
+        Logger.debug("Drawing rectangle at \(self.x), \(self.y), \(self.width), \(self.height)")
+        canvas.drawRect(
+            x: self.x,
+            y: self.y,
+            width: self.width,
+            height: self.height,
+            paint: self.paint
+        )
     }
 
     public typealias BindType = Rectangle

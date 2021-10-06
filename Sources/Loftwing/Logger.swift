@@ -35,11 +35,17 @@ public actor Logger {
         print("\("[ERROR]".red) \(message)")
     }
 
-    /// Logs a debug message. Only works if the app was compiled with
-    /// LOFTWING_DEBUG flag.
-    public static func debug(_ message: String) {
-        #if LOFTWING_DEBUG
+    /// Logs a debug message. The first parameter is used to toggle debug logs for
+    /// components of the library at compile time.
+    /// Change the debug flags for components in `Debug.swift`.
+    public static func debug(_ dbg: Bool, _ message: String) {
+        if dbg {
             print("\("[DEBUG]".green) \(message)")
-        #endif
+        }
+    }
+
+    /// Logs a debug message.
+    public static func debug(_ message: String) {
+        Logger.debug(true, message)
     }
 }

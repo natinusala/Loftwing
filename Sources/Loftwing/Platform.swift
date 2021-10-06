@@ -89,6 +89,12 @@ protocol Window {
     /// Graphics canvas.
     var canvas: Canvas? { get }
 
+    /// Current window width.
+    var width: Float { get }
+
+    /// Current window height.
+    var height: Float { get }
+
     /// Loads or reloads the window. If called for the first time, will create
     /// and open a new window. If called when a window already exists, the existing
     /// window will be closed, all graphics resources will be released and a new window

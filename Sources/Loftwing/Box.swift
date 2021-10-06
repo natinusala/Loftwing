@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+import Yoga
+
 /// A Box is a view that contains other views and, most importantly,
 /// is responsible for laying them out. Layout is done using a flexbox-like
 /// system.
@@ -25,6 +27,8 @@ open class Box: View {
     open var content: View {
         EmptyView()
     }
+
+    // TODO: add Axis to every init
 
     /// Creates a box with the given children.
     public init(@BoxBuilder builder: () -> [View]) {
@@ -49,18 +53,50 @@ open class Box: View {
         }
     }
 
+    /// Adds the given view to the box.
+    public func addView(_ view: View) {
+        // Add our link
+        self.children.append(view)
+        view.parent = self
+
+        // Add Yoga link
+        let position = YGNodeGetChildCount(self.ygNode)
+        YGNodeInsertChild(self.ygNode, view.ygNode, position)
+
+        self.invalidateLayout()
+    }
+
     /// Inflates the box with the given content. Use with the `content`
     /// property when creating custom views.
     @discardableResult
-    public func box(@BoxBuilder builder: () -> [View]) -> Box {
-        self.children = builder()
+    public func box(@BoxBuilder builder: () -> [View]) -> Self {
+        let children = builder()
+
+        for child in children {
+            self.addView(child)
+        }
+
         return self
     }
 
     open override func frame(canvas: Canvas) {
+        super.frame(canvas: canvas)
+
         // Run frame of every children
         for child in self.children {
             child.frame(canvas: canvas)
+        }
+    }
+
+    open override func onLayoutChanged(parentX: Float, parentY: Float) {
+        super.onLayoutChanged(parentX: parentX, parentY: parentY)
+
+        // At this point, the position and dimensions properties are set
+
+        // Propagate the signal to every child
+        Logger.debug(debugLayout, "Box parent layout changed, propagating to \(self.children.count) child views")
+        for child in self.children {
+            child.onLayoutChanged(parentX: self.x, parentY: self.y)
         }
     }
 }

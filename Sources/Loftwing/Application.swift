@@ -87,6 +87,11 @@ open class Application {
         // Push main activity
         await self.activitiesStackLayer.push(activity: self.mainActivity)
 
+        // Resize every layer
+        for layer in self.layers {
+            layer.resizeToFit(width: window.width, height: window.height)
+        }
+
         // Main loop
         let queue = TaskQueue.sharedInstance
         while(true) {

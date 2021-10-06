@@ -49,11 +49,11 @@ class Event<CallbackParameter> {
     @discardableResult
     public func fire(with parameter: CallbackParameter) async -> Bool {
         if self.observers.isEmpty {
-            Logger.debug("Dropping firing of event because there are no observers")
+            Logger.debug(debugEvents, "Dropping firing of event because there are no observers")
             return false
         }
 
-        Logger.debug("Firing event")
+        Logger.debug(debugEvents, "Firing event")
 
         // Start a task for every observer
         let queue = TaskQueue.sharedInstance
@@ -63,7 +63,7 @@ class Event<CallbackParameter> {
                     finishCallback: { finished in
                         // Remove task from tracked handlers
                         self.tasks.removeFirst(finished)
-                        Logger.debug("Removed handle of task \(finished.uuid) from event tracked tasks")
+                        Logger.debug(debugEvents, "Removed handle of task \(finished.uuid) from event tracked tasks")
                     },
                     operation: {
                         await observer(parameter)
@@ -72,7 +72,7 @@ class Event<CallbackParameter> {
             )
         }
 
-        Logger.debug("Started \(self.observers.count) task(s) for \(self.observers.count) observer(s)")
+        Logger.debug(debugEvents, "Started \(self.observers.count) task(s) for \(self.observers.count) observer(s)")
 
         return true
     }
@@ -80,7 +80,7 @@ class Event<CallbackParameter> {
     /// Starts observing the event. The given callback will be executed asynchronously
     /// whenever someone fires the event.
     public func observe(with callback: @escaping ObserverCallback) {
-        Logger.debug("Added a new event observer")
+        Logger.debug(debugEvents, "Added a new event observer")
         self.observers.append(callback)
     }
 }
@@ -138,12 +138,12 @@ actor TaskHandle<Success, Failure>: Equatable where Failure: Error {
         /// right after its creation.
         self.task = Task<Success, Failure> {
             // Run the task
-            Logger.debug("Executing task \(self.uuid) callback")
+            Logger.debug(debugEvents, "Executing task \(self.uuid) callback")
             let result = await operation()
 
             // Set status to finished
             await self.setStatus(.finished)
-            Logger.debug("Task \(self.uuid) set to finished")
+            Logger.debug(debugEvents, "Task \(self.uuid) set to finished")
 
             return result
         }
@@ -152,12 +152,12 @@ actor TaskHandle<Success, Failure>: Equatable where Failure: Error {
     deinit {
         // TODO: make sure this actually works (when an activity / view is closed, all its events must stop)
 
-        Logger.debug("Deinit called on task \(self.uuid)")
+        Logger.debug(debugEvents, "Deinit called on task \(self.uuid)")
 
         // If we are still running, it means the event owning us has been
         // deinited, so we have to cancel the task and drop everything
         if self.status == .running {
-            Logger.debug("Cancelling task \(self.uuid) due to Event deinit")
+            Logger.debug(debugEvents, "Cancelling task \(self.uuid) due to Event deinit")
             self.status = .cancelling
             if let task = self.task {
                 task.cancel()
@@ -230,12 +230,12 @@ class TaskQueue {
                     newTasks.append(task)
                 } else {
                     // Run the "finish callback"
-                    Logger.debug("Running task \(handle.uuid) finished callback")
+                    Logger.debug(debugEvents, "Running task \(handle.uuid) finished callback")
                     if let cb = await handle.finishCallback {
                         cb(handle)
                     }
 
-                    Logger.debug("Task \(handle.uuid) finished")
+                    Logger.debug(debugEvents, "Task \(handle.uuid) finished")
                 }
             }
 
@@ -253,7 +253,7 @@ class TaskQueue {
                     if let task = await handle.task {
                         task.cancel()
                         await handle.setStatus(.cancelling)
-                        Logger.debug("Requested cancellation of task \(handle.uuid)")
+                        Logger.debug(debugEvents, "Requested cancellation of task \(handle.uuid)")
                     }
                 }
             }

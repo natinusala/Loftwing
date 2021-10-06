@@ -31,6 +31,13 @@ class ActivitiesStackLayer: Layer {
     func push(activity: Activity) async {
         await self.stack.push(activity: activity)
     }
+
+    func resizeToFit(width: Float, height: Float) {
+        Logger.debug(debugLayout, "Resizing every activity to fit \(width)x\(height)")
+        for activity in self.stack {
+            activity.resizeToFit(width: width, height: height)
+        }
+    }
 }
 
 /// Responsible for pushing and popping activities from the stack, as well
