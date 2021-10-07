@@ -16,6 +16,21 @@
 
 import Yoga
 
+/// The axis of a box.
+public enum Axis {
+    case column
+    case row
+
+    var yogaFlexDirection: YGFlexDirection {
+        switch self {
+            case .column:
+                return YGFlexDirectionColumn
+            case .row:
+                return YGFlexDirectionRow
+        }
+    }
+}
+
 /// A Box is a view that contains other views and, most importantly,
 /// is responsible for laying them out. Layout is done using a flexbox-like
 /// system.
@@ -28,13 +43,11 @@ open class Box: View {
         EmptyView()
     }
 
-    // TODO: add Axis to every init
-
     /// Creates a box with the given children.
-    public init(@BoxBuilder builder: () -> [View]) {
+    public init(_ axis: Axis, @BoxBuilder builder: () -> [View]) {
         super.init()
 
-        self.box(builder: builder)
+        self.box(axis, builder: builder)
     }
 
     /// Creates a box with content taken from its `content` property.
@@ -42,7 +55,7 @@ open class Box: View {
         super.init()
 
         // Calling self.content will automatically inflate self.children
-        // if box(builder:) is called at any point
+        // if box(_:builder:) is called at any point
         if let content = self.content as? Box {
             if content !== self {
                 fatalError("Box content returned another view than itself")
@@ -69,8 +82,10 @@ open class Box: View {
     /// Inflates the box with the given content. Use with the `content`
     /// property when creating custom views.
     @discardableResult
-    public func box(@BoxBuilder builder: () -> [View]) -> Self {
+    public func box(_ axis: Axis, @BoxBuilder builder: () -> [View]) -> Self {
         let children = builder()
+
+        YGNodeStyleSetFlexDirection(self.ygNode, axis.yogaFlexDirection)
 
         for child in children {
             self.addView(child)

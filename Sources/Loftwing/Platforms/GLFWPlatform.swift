@@ -175,7 +175,7 @@ class GLFWWindow: Window {
         glfwMakeContextCurrent(window)
 
         switch self.graphicsAPI {
-            case .OpenGL:
+            case .gl:
                 glEnable(UInt32(GL_FRAMEBUFFER_SRGB))
         }
 
@@ -190,7 +190,7 @@ class GLFWWindow: Window {
         var backendRenderTarget: OpaquePointer? = nil
 
         switch self.graphicsAPI {
-            case .OpenGL:
+            case .gl:
                 let interface = gr_glinterface_create_native_interface()
                 self.context = gr_direct_context_make_gl(interface)
 

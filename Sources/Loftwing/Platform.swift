@@ -74,13 +74,13 @@ public enum WindowCreationError: Error {
 /// The graphics API / renderer of an application.
 public enum GraphicsAPI {
     /// OpenGL.
-    case OpenGL
+    case gl
 
     /// Selects the first available graphics API, or throws if none is
     /// available.
     public static func findFirstAvailable() throws -> GraphicsAPI {
         // TODO: only return OpenGL if it's actually available
-        return .OpenGL
+        return .gl
     }
 }
 

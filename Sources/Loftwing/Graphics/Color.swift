@@ -23,7 +23,8 @@ public struct Color {
         self.init(255, red, green, blue)
     }
 
-    /// Creates a color with given ARGB values.
+    /// Creates a color with given ARGB values. Assumes given value are all
+    /// between 0 and 255.
     public init(_ alpha: UInt8, _ red: UInt8, _ green: UInt8, _ blue: UInt8) {
         self.value = (UInt32(alpha) << 24) |
             (UInt32(red) << 16) |
@@ -36,9 +37,11 @@ public struct Color {
         self.value = value
     }
 
-    public static let white: Color = Color(255, 255, 255)
-    public static let black: Color = Color(0, 0, 0)
-    public static let red: Color = Color(255, 0, 0)
-    public static let green: Color = Color(0, 255, 0)
-    public static let blue: Color = Color(0, 0, 255)
+    public static let white = Color(255, 255, 255)
+    public static let black = Color(0, 0, 0)
+    public static let red = Color(255, 0, 0)
+    public static let green = Color(0, 255, 0)
+    public static let blue = Color(0, 0, 255)
+    public static let yellow = Color(255, 255, 0)
+    public static let orange = Color(255, 165, 0)
 }

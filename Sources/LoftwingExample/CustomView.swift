@@ -19,15 +19,14 @@ import Loftwing
 // A custom view always inherits Box or View.
 class CustomView: Box {
     // Since we are inheriting box, we can use the `content` property
-    // to "inflate" ourselves with the desired content. We use the `self.box(builder:)`
+    // to "inflate" ourselves with the desired content. We use the `self.box(_:builder:)`
     // method for that.
     override var content: View {
-        self.box {
-            EmptyView()
-            EmptyView()
-            Box {
-                EmptyView()
-            }
+        self.box(.column) {
+            Rectangle(color: Color.yellow)
+                .grow(100%)
+            Rectangle(color: Color.orange)
+                .grow(100%)
         }
     }
 }

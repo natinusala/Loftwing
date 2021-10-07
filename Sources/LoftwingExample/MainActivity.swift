@@ -20,14 +20,15 @@ import Loftwing
 // starts.
 class MainActivity: Activity {
     override var content: View {
-        Box {
+        Box(.row) {
             Rectangle(color: Color.red)
                 .grow(100%)
             Rectangle(color: Color.blue)
                 .grow(100%)
             Rectangle(color: Color.green)
                 .grow(100%)
-            // CustomView()
+            CustomView()
+                .grow(100%)
         }
     }
 
