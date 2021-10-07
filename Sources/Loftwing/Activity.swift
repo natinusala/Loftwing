@@ -61,7 +61,8 @@ open class Activity: FrameProtocol {
     /// Resize the activity content to given dimensions.
     func resizeToFit(width: Float, height: Float) {
         if let mountedContent = self.mountedContent {
-            mountedContent.setRequestedDimensions(width: width, height: height)
+            mountedContent.width(width.dip)
+            mountedContent.height(height.dip)
         }
     }
 }

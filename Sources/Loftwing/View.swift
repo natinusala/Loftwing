@@ -138,40 +138,54 @@ open class View: FrameProtocol {
         }
     }
 
-    /// Sets requested dimensions of the view. Use nil to let Loftwing decide the
-    /// dimensions for you.
-    func setRequestedDimensions(width: Float?, height: Float?) {
+    /// Sets the preferred width of the view. This will not always be the final
+    /// width depending on layout settings and surrounding views.
+    /// Use nil to have the layout automatically resize the view.
+    @discardableResult
+    public func width(_ width: DIP?) -> Self {
         YGNodeStyleSetMinWidthPercent(self.ygNode, 0)
-        YGNodeStyleSetMinHeightPercent(self.ygNode, 0)
 
-        // TODO: call setRequestedWidth / setRequestedHeight instead
         if let width = width {
-            YGNodeStyleSetWidth(self.ygNode, width)
-            YGNodeStyleSetMinWidth(self.ygNode, width)
+            YGNodeStyleSetWidth(self.ygNode, width.value)
+            YGNodeStyleSetMinWidth(self.ygNode, width.value)
         }
         else {
             YGNodeStyleSetWidthAuto(self.ygNode)
             YGNodeStyleSetMinWidth(self.ygNode, YGUndefined)
         }
 
+        self.invalidateLayout()
+
+        return self
+    }
+
+    /// Sets the preferred height of the view. This will not always be the final
+    /// width depending on layout settings and surrounding views.
+    /// Use nil to have the layout automatically resize the view.
+    @discardableResult
+    public func height(_ height: DIP?) -> Self {
+        YGNodeStyleSetMinHeightPercent(self.ygNode, 0)
+
         if let height = height {
-            YGNodeStyleSetHeight(self.ygNode, height)
-            YGNodeStyleSetMinHeight(self.ygNode, height)
+            YGNodeStyleSetHeight(self.ygNode, height.value)
+            YGNodeStyleSetMinHeight(self.ygNode, height.value)
         } else {
             YGNodeStyleSetHeightAuto(self.ygNode)
             YGNodeStyleSetMinHeight(self.ygNode, YGUndefined)
         }
 
         self.invalidateLayout()
+
+        return self
     }
 
-    /// Sets the grow factor of the view, aka how much of the remaining space
+    /// Sets the growth factor of the view, aka how much of the remaining space
     /// it should take in its parent box axis.
     /// Opposite of shrink.
     /// Default is 0%.
-    // TODO: change to percentage or tell that values are between 0 and 1 + add a check in the function
-    public func grow(_ factor: Float) -> Self {
-        YGNodeStyleSetFlexGrow(self.ygNode, factor)
+    @discardableResult
+    public func grow(_ factor: Percentage) -> Self {
+        YGNodeStyleSetFlexGrow(self.ygNode, factor.value)
         self.invalidateLayout()
         return self
     }
@@ -237,7 +251,6 @@ public class Rectangle: View, BindableView {
     }
 
     open override func draw(canvas: Canvas) {
-        Logger.debug("Drawing rectangle at \(self.x), \(self.y), \(self.width), \(self.height)")
         canvas.drawRect(
             x: self.x,
             y: self.y,
