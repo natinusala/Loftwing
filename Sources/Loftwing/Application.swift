@@ -100,12 +100,12 @@ open class Application {
                 // Exit
                 Logger.info("Exiting...")
 
+                await self.onExit()
+
                 // Call stop callback
                 if let cb = stopCallback {
                     cb()
                 }
-
-                // TODO: Deinit stuff
 
                 // Break the loop to exit
                 break
@@ -145,8 +145,12 @@ open class Application {
     /// Requests the application to be exited. Runs the given callback when the app is fully
     /// exited and the window is closed.
     public func exit(callback: @escaping () -> ()) {
-        // TODO: call onExit event when the event loop is made - turn exit into an event?
         self.stopCallback = callback
         self.shouldStop = true
+    }
+
+    /// Called when the app exits.
+    open func onExit() async {
+        // Nothing by default
     }
 }

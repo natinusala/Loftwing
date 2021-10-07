@@ -122,7 +122,7 @@ open class View: FrameProtocol {
     /// Invalidates the view, triggering a layout recalculation of the whole view tree
     /// starting from the top-most parent.
     func invalidateLayout() {
-        // TODO: mark the yoga node as dirty (why?)
+        // TODO: mark the yoga node as dirty
 
         // Invalidate every view of the tree, going upwards from this one
         // The point is that the top-most view will be laid out at next frame
