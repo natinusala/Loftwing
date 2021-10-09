@@ -30,7 +30,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/onevcat/Rainbow.git", .upToNextMajor(from: "4.0.0"))
+        .package(url: "https://github.com/onevcat/Rainbow.git", .upToNextMajor(from: "4.0.0")),
     ],
     targets: [
         // Loftwing targets
@@ -48,10 +48,6 @@ let package = Package(
             name: "LoftwingExample",
             dependencies: ["Loftwing"]
         ),
-        .testTarget(
-            name: "LoftwingTests",
-            dependencies: ["Loftwing"]
-        ),
         // Embedded native libraries
         .target(
             name: "CYoga",
@@ -67,6 +63,13 @@ let package = Package(
         // System libraries
         .systemLibrary(name: "GLFW", path: "External/GLFW", pkgConfig: "glfw3"),
         .systemLibrary(name: "GL", path: "External/GL", pkgConfig: "gl"),
-        .systemLibrary(name: "Skia", path: "External/Skia", pkgConfig: "skia_loftwing")
+        .systemLibrary(name: "Skia", path: "External/Skia", pkgConfig: "skia_loftwing"),
+        // Test targets
+        // TODO: Use Quick + Nimble once it has full async support
+        // Not even XCTest has async support, what's the point?
+        // .testTarget(
+        //     name: "LoftwingTests",
+        //     dependencies: ["Loftwing"]
+        // ),
     ]
 )

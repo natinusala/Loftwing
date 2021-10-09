@@ -238,7 +238,7 @@ class GLFWWindow: Window {
             throw SkiaError.cannotInitSkiaCanvas
         }
 
-        self.canvas = Canvas(nativeCanvas: nativeCanvas)
+        self.canvas = SkiaCanvas(nativeCanvas: nativeCanvas)
     }
 
     // TODO: glfwDestroyWindow + glfwTerminate

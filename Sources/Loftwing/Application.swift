@@ -125,7 +125,7 @@ public protocol Context {
 }
 
 /// Context shared instance.
-private var contextSharedInstance: Context!
+var contextSharedInstance: Context!
 
 /// Allows to get the running app "context" instance.
 public func getContext() -> Context {

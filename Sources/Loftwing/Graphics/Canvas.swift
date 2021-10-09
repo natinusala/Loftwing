@@ -17,19 +17,31 @@
 import Skia
 
 /// A canvas is the handle used to draw everything onscreen.
-public class Canvas {
+public protocol Canvas {
+    /// Draws the given paint on the whole canvas.
+    func drawPaint(_ paint: Paint)
+
+    /// Draws the given paint in the given rectangle region.
+    func drawRect(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        paint: Paint
+    )
+}
+
+public class SkiaCanvas: Canvas {
     let native: OpaquePointer
 
     init(nativeCanvas: OpaquePointer) {
         self.native = nativeCanvas
     }
 
-    /// Draws the given paint on the whole canvas.
     public func drawPaint(_ paint: Paint) {
         sk_canvas_draw_paint(self.native, paint.native)
     }
 
-    /// Draws the given paint in the given rectangle region.
     public func drawRect(
         x: Float,
         y: Float,
