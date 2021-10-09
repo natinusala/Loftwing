@@ -77,7 +77,7 @@ class EventTicking<CallbackParameter, Success, Failure>: Ticking where Failure: 
     typealias EventTask = Task<Success, Failure>
 
     /// Weak reference to the associated event.
-    let event: Weak<Event<CallbackParameter>>
+    weak var event: Event<CallbackParameter>?
 
     /// The underlying task. Must be optional and set to nil in case we use it
     /// before it's actually set (cannot use self until all properties are set).
@@ -98,7 +98,7 @@ class EventTicking<CallbackParameter, Success, Failure>: Ticking where Failure: 
         event: Event<CallbackParameter>,
         operation: @escaping () async -> Success
     ) where Failure == Error {
-        self.event = Weak(value: event)
+        self.event = event
 
         // Start the task
         self.task = EventTask {
@@ -123,7 +123,7 @@ class EventTicking<CallbackParameter, Success, Failure>: Ticking where Failure: 
         // Check if the event has been deinited, in which case cancel the task
         // We have to trust that it's actually cancelling, but since it's cooperative
         // there is not much we can do to guarantee cancellation.
-        if self.event.value == nil {
+        if self.event == nil {
             // If the task is not set (yet), just wait for the next frame to
             // collect it
             if let task = self.task {

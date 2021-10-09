@@ -58,6 +58,13 @@ public class Runner {
 
     /// Adds a new ticking to the runner loop.
     public func addTicking(_ ticking: Ticking) {
+        // Ensure the ticking isn't already in
+        for t in self.tickings {
+            if t === ticking {
+                return
+            }
+        }
+
         // If we are inside our own `frame()` method, add them to the temporary
         // list to avoid mutating the list as we iterate over it, and to avoid
         // running the new ticking for one more frame than necessary (causes jitters).
@@ -101,7 +108,8 @@ public class Runner {
 
 /// A "ticking" is something that runs every frame until it's finished.
 /// Examples are: animations, background tasks...
-public protocol Ticking {
+/// Can only be used on classes.
+public protocol Ticking: AnyObject {
     /// Method called every frame to run the ticking.
     func frame()
 

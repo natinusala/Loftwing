@@ -2,30 +2,12 @@
   "object": {
     "pins": [
       {
-        "package": "Easing",
-        "repositoryURL": "https://github.com/manuelCarlos/Easing.git",
-        "state": {
-          "branch": null,
-          "revision": "d079829724f8a6b0d2c1c78aa1c06fb45fabfd40",
-          "version": "2.1.0"
-        }
-      },
-      {
         "package": "Rainbow",
         "repositoryURL": "https://github.com/onevcat/Rainbow.git",
         "state": {
           "branch": null,
           "revision": "e0dada9cd44e3fa7ec3b867e49a8ddbf543e3df3",
           "version": "4.0.1"
-        }
-      },
-      {
-        "package": "swift-numerics",
-        "repositoryURL": "https://github.com/apple/swift-numerics",
-        "state": {
-          "branch": null,
-          "revision": "0a23770641f65a4de61daf5425a37ae32a3fd00d",
-          "version": "1.0.1"
         }
       }
     ]

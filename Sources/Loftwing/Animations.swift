@@ -14,99 +14,168 @@
     limitations under the License.
 */
 
+#if os(Linux)
+import Glibc
+#endif
+
 /// Type of animation completion callbacks.
 public typealias AnimationCompletionCallback = () -> ()
 
-/// Easing type (in, out, in-out).
-public enum EasingType {
-    case easeIn
-    case easeOut
-    case easeInOut
+/// Type of animation ticking callbacks.
+public typealias AnimationTickingCallback = (Float) -> ()
+
+/// Returned when you start a new animation, used to set the ticking
+/// and completion callbacks. Do not store the handle returned by
+/// the `animate` method.
+public protocol AnimationHandle {
+    /// Executes the given callback when the animation completes.
+    @discardableResult
+    func then(callback: @escaping AnimationCompletionCallback) -> Self
+
+    /// Executes the given callback at every frame of the animation.
+    @discardableResult
+    func observe(callback: @escaping AnimationTickingCallback) -> Self
 }
 
-/// Easing functions.
-public enum Easing {
-    case quadratic(EasingType)
-    case cubic(EasingType)
-    case quartic(EasingType)
-    case quintic(EasingType)
-    case sine(EasingType)
-    case circular(EasingType)
-    case exponential(EasingType)
-    case elastic(EasingType)
-    case back(EasingType)
-    case bounce(EasingType)
+public extension AnimationHandle {
+    /// Blocks until the animation is completed. Incompatible with `then`.
+    func waitForCompletion() async {
+        await withUnsafeContinuation { continuation in
+            self.then {
+                continuation.resume()
+            }
+        }
+    }
 }
 
-/// Builder for new float animations. Returned by the `animate()` method of animated floats.
-public struct FloatAnimationBuilder {
-    var animation: Animation
+public struct RegularAnimationHandle: AnimationHandle {
+    weak var animation: Animation?
 
-    /// Allows to run a callback when the animation completes.
-    public mutating func then(_ callback: @escaping AnimationCompletionCallback) {
-        animation.completionCallback = callback
+    init(for animation: Animation) {
+        self.animation = animation
+    }
+
+    @discardableResult
+    public func then(callback: @escaping AnimationCompletionCallback) -> Self {
+        if let animation = self.animation {
+            animation.completionCallback = callback
+        }
+
+        return self
+    }
+
+    @discardableResult
+    public func observe(callback: @escaping AnimationTickingCallback) -> Self {
+        if let animation = self.animation {
+            animation.tickingCallback = callback
+        }
+
+        return self
+    }
+}
+
+/// Animation handle used for animations that do not need to start.
+public class NullAnimationHandle: AnimationHandle {
+    @discardableResult
+    public func then(callback: @escaping AnimationCompletionCallback) -> Self {
+        // Immediately run the callback since the animation is already
+        // completed
+        callback()
+
+        return self
+    }
+
+    @discardableResult
+    public func observe(callback: @escaping AnimationTickingCallback) -> Self {
+        // Nothing to do
+
+        return self
     }
 }
 
 /// Use this property wrapper on any float value to make it animatable.
 /// To access its animating methods, use the projected value with `$` operator.
 @propertyWrapper
-public class Animate {
+public class Animation {
+    /// Current value of the animation.
     var value: Float
-    var ongoingAnimation: Animation? = nil
+
+    /// The ticking of the currently running animation, if any.
+    weak var currentTicking: AnimationTicking? = nil
+
+    /// Callback to be executed when the animation is completed.
+    var completionCallback: AnimationCompletionCallback = {}
+
+    /// Callback executed at every animation tick.
+    var tickingCallback: AnimationTickingCallback = {_ in}
 
     public init(wrappedValue: Float) {
         self.value = wrappedValue
     }
 
+    /// Returns the float value.
     public var wrappedValue: Float {
         return value
     }
 
-    public var projectedValue: Animate {
+    /// Returns the `Animation` reference bound to this animated
+    /// float.
+    public var projectedValue: Animation {
         return self
     }
 
     /// Starts a new animation, stopping the current one if any is running.
     /// The animation starts from the given value to the target one.
-    /// Do not store and use the returned FloatAnimationBuilder as the animation will start
-    /// immediately after this method is called.
+    /// Duration is in milliseconds.
     public func animate(
         from initial: Float,
         to target: Float,
-        during duration: Int,
+        during duration: UInt64,
         with easing: Easing
-    ) -> FloatAnimationBuilder {
-        // TODO: stop ongoing animation if any
+    ) async -> AnimationHandle {
+        // Stop ongoing animation if any
+        if let runningTicking = self.currentTicking {
+            // Cancel the ticking, break the weak reference
+            runningTicking.cancel()
+            self.currentTicking = nil
+        }
 
-        // Set initial value
+        // If target value == initial value, don't do anything
+        if initial == target {
+            return NullAnimationHandle()
+        }
+
+        // Reinit state
         self.value = initial
+        self.completionCallback = {}
+        self.tickingCallback = {_ in}
 
-        // Create a new animation
-        let animation = Animation(
-            targetValue: target,
-            duration: duration,
-            easing: easing
+        // Create and keep a weak reference to the new animation
+        let ticking = AnimationTicking(
+            animation: self,
+            during: duration,
+            easing: easing,
+            from: initial,
+            target: target
         )
-        self.ongoingAnimation = animation
+        self.currentTicking = ticking
 
-        // Enqueue the animation
-        AnimationsRunner.sharedInstance.addAnimation(animation)
+        // Enqueue the new animation
+        await getContext().runner.addTicking(ticking)
 
-        // Return a builder for optional properties
-        return FloatAnimationBuilder(animation: animation)
+        // Return handle
+        return RegularAnimationHandle(for: self)
     }
 
     /// Starts a new animation, stopping the current one if any is running.
     /// The animation starts from the current value to the target one.
-    /// Do not store and use the returned FloatAnimationBuilder as the animation will start
-    /// immediately after this method is called.
+    /// Duration is in milliseconds.
     public func animate(
         to target: Float,
-        during duration: Int,
+        during duration: UInt64,
         with easing: Easing
-    ) -> FloatAnimationBuilder {
-        return self.animate(
+    ) async -> AnimationHandle {
+        return await self.animate(
             from: self.value,
             to: target,
             during:duration,
@@ -114,43 +183,451 @@ public class Animate {
         )
     }
 
-    // TODO: stop animation on deinit to prevent leaks
+    deinit {
+        // Run our completion callback in case there is a task continuation inside
+        // that we have to unlock. Regular callbacks won't be executed since it's always
+        // set to {} after executing it.
+        self.completionCallback()
+    }
 }
 
-/// Handle created by the animate method of an animated float, to allow
-/// stopping, resetting or reversing an animation.
-/// Also holds the animation state.
-struct Animation {
-    var targetValue: Float
-    var duration: Int
-    var easing: Easing
+/// A ticking created when an animation is (re) started.
+class AnimationTicking: Ticking {
+    /// Bound Animation.
+    weak var animation: Animation? = nil
 
-    var finished = false
-    var completionCallback: AnimationCompletionCallback? = nil
-}
+    /// Is the animation finished?
+    var finished: Bool = false
 
-/// Holds every ongoing animation and is responsible for running them every tick.
-/// Use the sharedInstance property to get the singleton instance.
-class AnimationsRunner {
-    public static var sharedInstance = AnimationsRunner()
+    /// How long has the animation been running for? In nanoseconds.
+    var runningFor: UInt64 = 0
 
-    var animations: [Animation] = []
+    /// The last time the frame method has been called. In nanoseconds, using
+    /// the same clock as `runningFor`.
+    var lastFrameTime: UInt64 = 0
 
-    /// Adds the given animation to the runner.
-    func addAnimation(_ animation: Animation) {
-        self.animations.append(animation)
+    /// Duration of the animation.
+    /// Animation will be completed when `runningFor` reaches `duration`.
+    let duration: UInt64
+
+    let easing: Easing
+    let initialValue: Float
+    let targetValue: Float
+
+    init(
+        animation: Animation,
+        during duration: UInt64,
+        easing: Easing,
+        from initialValue: Float,
+        target targetValue: Float
+    ) {
+        self.animation = animation
+        self.easing = easing
+        self.initialValue = initialValue
+        self.targetValue = targetValue
+
+        // Convert millis duration to nanosec duration
+        self.duration = duration * 1000000
     }
 
-    /// Runs the animations for one frame.
+    /// Runs the animation for one frame.
     func frame() {
-        // To avoid mutating the running animations list while we are in the
-        // loop, collect every callback to run here and run them outside of the
-        // for loop (this is in case another animation gets started inside a
-        // completion callback)
-        var completions: [AnimationCompletionCallback] = []
+        // Advance the animation value, run callback if finished
+        if let animation = self.animation {
+            // Compute time
+            let now = getTimeNsec()
+            let delta = self.lastFrameTime == 0 ? 0 : now - self.lastFrameTime
+            self.lastFrameTime = now
+            self.runningFor += delta
 
-        // Advance every animation
+            // Run the easing function
+            if self.runningFor >= self.duration {
+                animation.value = self.targetValue
+            } else {
+                animation.value = self.easing.ease(
+                    Float(self.runningFor),
+                    self.initialValue,
+                    self.targetValue - self.initialValue,
+                    Float(self.duration)
+                )
+            }
 
-        // Collect every finished animation
+            // Run ticking callback
+            animation.tickingCallback(animation.value)
+
+            // Handle completion
+            if self.runningFor >= self.duration {
+                animation.completionCallback()
+                animation.completionCallback = {}
+
+                self.finished = true
+            }
+        }
+        // If the bound animation has been released, finish the ticking
+        // without running the callback and do nothing
+        else {
+            self.finished = true
+        }
     }
+
+    /// Cancels the animation.
+    func cancel() {
+        // Run completion callback if the animation still lives
+        if let animation = self.animation {
+            animation.completionCallback()
+            animation.completionCallback = {}
+        }
+
+        // Break the weak reference, this will cause the ticking to be finished
+        // at next frame.
+        self.animation = nil
+    }
+}
+
+/// Easing functions.
+public enum Easing {
+    case linear
+
+    case quadInOut
+    case quadOutIn
+    case quadIn
+    case quadOut
+
+    case cubicInOut
+    case cubicOutIn
+    case cubicIn
+    case cubicOut
+
+    case quartInOut
+    case quartOutIn
+    case quartIn
+    case quartOut
+
+    case quintInOut
+    case quintOutIn
+    case quintIn
+    case quintOut
+
+    case sineInOut
+    case sineOutIn
+    case sineIn
+    case sineOut
+
+    case expoInOut
+    case expoOutIn
+    case expoIn
+    case expoOut
+
+    case circInOut
+    case circOutIn
+    case circIn
+    case circOut
+
+    case bounceInOut
+    case bounceOutIn
+    case bounceIn
+    case bounceOut
+
+    /// Run the easing function with given parameters.
+    func ease(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+        switch self {
+            case .linear:
+                return easingLinear(t, b, c, d)
+
+            case .quadInOut:
+                return easingInOutQuad(t, b, c, d)
+            case .quadOutIn:
+                return easingOutInQuad(t, b, c, d)
+            case .quadIn:
+                return easingInQuad(t, b, c, d)
+            case .quadOut:
+                return easingOutQuad(t, b, c, d)
+
+            case .cubicInOut:
+                return easingInOutCubic(t, b, c, d)
+            case .cubicOutIn:
+                return easingOutInCubic(t, b, c, d)
+            case .cubicIn:
+                return easingInCubic(t, b, c, d)
+            case .cubicOut:
+                return easingOutCubic(t, b, c, d)
+
+            case .quartInOut:
+                return easingInOutQuart(t, b, c, d)
+            case .quartOutIn:
+                return easingOutInQuart(t, b, c, d)
+            case .quartIn:
+                return easingInQuart(t, b, c, d)
+            case .quartOut:
+                return easingOutQuart(t, b, c, d)
+
+            case .quintInOut:
+                return easingInOutQuint(t, b, c, d)
+            case .quintOutIn:
+                return easingOutInQuint(t, b, c, d)
+            case .quintIn:
+                return easingInQuint(t, b, c, d)
+            case .quintOut:
+                return easingOutQuint(t, b, c, d)
+
+            case .sineInOut:
+                return easingInOutSine(t, b, c, d)
+            case .sineOutIn:
+                return easingOutInSine(t, b, c, d)
+            case .sineIn:
+                return easingInSine(t, b, c, d)
+            case .sineOut:
+                return easingOutSine(t, b, c, d)
+
+            case .expoInOut:
+                return easingInOutExpo(t, b, c, d)
+            case .expoOutIn:
+                return easingOutInExpo(t, b, c, d)
+            case .expoIn:
+                return easingInExpo(t, b, c, d)
+            case .expoOut:
+                return easingOutExpo(t, b, c, d)
+
+            case .circInOut:
+                return easingInOutCirc(t, b, c, d)
+            case .circOutIn:
+                return easingOutInCirc(t, b, c, d)
+            case .circIn:
+                return easingInCirc(t, b, c, d)
+            case .circOut:
+                return easingOutCirc(t, b, c, d)
+
+            case .bounceInOut:
+                return easingInOutBounce(t, b, c, d)
+            case .bounceOutIn:
+                return easingOutInBounce(t, b, c, d)
+            case .bounceIn:
+                return easingInBounce(t, b, c, d)
+            case .bounceOut:
+                return easingOutBounce(t, b, c, d)
+        }
+    }
+}
+
+/// Returns current CPU time in nanoseconds.
+func getTimeNsec() -> UInt64 {
+    #if os(Linux)
+        var ts = timespec()
+        clock_gettime(CLOCK_MONOTONIC, &ts)
+        return UInt64(ts.tv_nsec) + UInt64(ts.tv_sec) * UInt64(1000000000);
+    #else
+        #error("Please implement getTimeUsec on your platform")
+    #endif
+}
+
+/// Easing functions below taken from https://github.com/EmmanuelOga/easing under MIT License.
+func easingLinear(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    return c * t / d + b
+}
+
+func easingInOutQuad(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    let t = t / d * 2
+    if (t < 1) {
+        return c / 2 * pow(t, 2) + b
+    }
+    return -c / 2 * ((t - 1) * (t - 3) - 1) + b
+}
+
+func easingInQuad(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    return c * pow(t / d, 2) + b
+}
+
+func easingOutQuad(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    let t = t / d
+    return -c * t * (t - 2) + b
+}
+
+func easingOutInQuad(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    if (t < d / 2) {
+        return easingOutQuad(t * 2, b, c / 2, d)
+    }
+    return easingInQuad((t * 2) - d, b + c / 2, c / 2, d)
+}
+
+func easingInCubic(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    return c * pow(t / d, 3) + b
+}
+
+func easingOutCubic(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    return c * (pow(t / d - 1, 3) + 1) + b
+}
+
+func easingInOutCubic(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    var t = t / d * 2
+    if (t < 1) {
+        return c / 2 * t * t * t + b
+    }
+    t = t - 2
+    return c / 2 * (t * t * t + 2) + b
+}
+
+func easingOutInCubic(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    if (t < d / 2) {
+        return easingOutCubic(t * 2, b, c / 2, d)
+    }
+    return easingInCubic((t * 2) - d, b + c / 2, c / 2, d)
+}
+
+func easingInQuart(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    return c * pow(t / d, 4) + b
+}
+
+func easingOutQuart(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    return -c * (pow(t / d - 1, 4) - 1) + b
+}
+
+func easingInOutQuart(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    let t = t / d * 2
+    if (t < 1) {
+        return c / 2 * pow(t, 4) + b
+    }
+    return -c / 2 * (pow(t - 2, 4) - 2) + b
+}
+
+func easingOutInQuart(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    if (t < d / 2) {
+        return easingOutQuart(t * 2, b, c / 2, d)
+    }
+    return easingInQuart((t * 2) - d, b + c / 2, c / 2, d)
+}
+
+func easingInQuint(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    return c * pow(t / d, 5) + b
+}
+
+func easingOutQuint(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    return c * (pow(t / d - 1, 5) + 1) + b
+}
+
+func easingInOutQuint(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    let t = t / d * 2
+    if (t < 1) {
+        return c / 2 * pow(t, 5) + b
+    }
+    return c / 2 * (pow(t - 2, 5) + 2) + b
+}
+
+func easingOutInQuint(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    if (t < d / 2) {
+        return easingOutQuint(t * 2, b, c / 2, d)
+    }
+    return easingInQuint((t * 2) - d, b + c / 2, c / 2, d)
+}
+
+func easingInSine(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    return -c * cos(t / d * (Float.pi / 2)) + c + b
+}
+
+func easingOutSine(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    return c * sin(t / d * (Float.pi / 2)) + b
+}
+
+func easingInOutSine(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    return -c / 2 * (cos(Float.pi * t / d) - 1) + b
+}
+
+func easingOutInSine(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    if (t < d / 2) {
+        return easingOutSine(t * 2, b, c / 2, d)
+    }
+    return easingInSine((t * 2) - d, b + c / 2, c / 2, d)
+}
+
+func easingInExpo(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    if (t == 0) {
+        return b
+    }
+    return c * powf(2, 10 * (t / d - 1)) + b - c * 0.001
+}
+
+func easingOutExpo(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    if (t == d) {
+        return b + c
+    }
+    return c * 1.001 * (-powf(2, -10 * t / d) + 1) + b
+}
+
+func easingInOutExpo(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    if (t == 0) {
+        return b
+    }
+    if (t == d) {
+        return b + c
+    }
+    let t = t / d * 2
+    if (t < 1) {
+        return c / 2 * powf(2, 10 * (t - 1)) + b - c * 0.0005
+    }
+    return c / 2 * 1.0005 * (-powf(2, -10 * (t - 1)) + 2) + b
+}
+
+func easingOutInExpo(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    if (t < d / 2) {
+        return easingOutExpo(t * 2, b, c / 2, d)
+    }
+    return easingInExpo((t * 2) - d, b + c / 2, c / 2, d)
+}
+
+func easingInCirc(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    return(-c * (sqrt(1 - powf(t / d, 2)) - 1) + b)
+}
+
+func easingOutCirc(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    return(c * sqrt(1 - powf(t / d - 1, 2)) + b)
+}
+
+func easingInOutCirc(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    var t = t / d * 2
+    if (t < 1) {
+        return -c / 2 * (sqrt(1 - t * t) - 1) + b
+    }
+    t = t - 2
+    return c / 2 * (sqrt(1 - t * t) + 1) + b
+}
+
+func easingOutInCirc(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    if (t < d / 2) {
+        return easingOutCirc(t * 2, b, c / 2, d)
+    }
+    return easingInCirc((t * 2) - d, b + c / 2, c / 2, d)
+}
+
+func easingOutBounce(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    var t = t / d
+    if (t < 1 / 2.75) {
+        return c * (7.5625 * t * t) + b
+    }
+    if (t < 2 / 2.75) {
+        t = t - (1.5 / 2.75)
+        return c * (7.5625 * t * t + 0.75) + b
+    }
+    else if (t < 2.5 / 2.75) {
+        t = t - (2.25 / 2.75)
+        return c * (7.5625 * t * t + 0.9375) + b
+    }
+    t = t - (2.625 / 2.75)
+    return c * (7.5625 * t * t + 0.984375) + b
+}
+
+func easingInBounce(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    return c - easingOutBounce(d - t, 0, c, d) + b
+}
+
+func easingInOutBounce(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    if (t < d / 2) {
+        return easingInBounce(t * 2, 0, c, d) * 0.5 + b
+    }
+    return easingOutBounce(t * 2 - d, 0, c, d) * 0.5 + c * 0.5 + b
+}
+
+func easingOutInBounce(_ t: Float, _ b: Float, _ c: Float, _ d: Float) -> Float {
+    if (t < d / 2) {
+        return easingOutBounce(t * 2, b, c / 2, d)
+    }
+    return easingInBounce((t * 2) - d, b + c / 2, c / 2, d)
 }

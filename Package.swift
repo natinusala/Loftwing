@@ -30,8 +30,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/onevcat/Rainbow.git", .upToNextMajor(from: "4.0.0")),
-        .package(url: "https://github.com/manuelCarlos/Easing.git", .upToNextMajor(from: "2.1.0"))
+        .package(url: "https://github.com/onevcat/Rainbow.git", .upToNextMajor(from: "4.0.0"))
     ],
     targets: [
         // Loftwing targets
@@ -42,8 +41,7 @@ let package = Package(
                 "GLFW",
                 "GL",
                 "Skia",
-                "Rainbow",
-                "Easing",
+                "Rainbow"
             ]
         ),
         .target(
