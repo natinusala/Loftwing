@@ -79,12 +79,20 @@ class EventTicking<CallbackParameter, Success, Failure>: Ticking where Failure: 
     /// Weak reference to the associated event.
     let event: Weak<Event<CallbackParameter>>
 
-    /// Ticking state.
-    var state = EventTickingState.running
-
     /// The underlying task. Must be optional and set to nil in case we use it
     /// before it's actually set (cannot use self until all properties are set).
     var task: EventTask? = nil
+
+    /// Is the underlying task finished or cancelled? This is a one-way boolean (false -> true)
+    /// to avoid data races and avoid the need for an actor (which is possible but would add
+    /// another layer to the events / tasks stack).
+    var finished = false {
+        willSet(newValue) {
+            if self.finished && !newValue {
+                fatalError("Event ticking has already been finished")
+            }
+        }
+    }
 
     init(
         event: Event<CallbackParameter>,
@@ -100,7 +108,7 @@ class EventTicking<CallbackParameter, Success, Failure>: Ticking where Failure: 
 
             // Set state to finished
             Logger.debug(debugEvents, "Event ticking marked as finished")
-            self.state = .finished
+            self.finished = true
 
             return result
         }
@@ -108,7 +116,7 @@ class EventTicking<CallbackParameter, Success, Failure>: Ticking where Failure: 
 
     func frame() {
         // Don't do anything if the task is already finished
-        if self.state == .finished {
+        if self.finished {
             return
         }
 
@@ -121,23 +129,10 @@ class EventTicking<CallbackParameter, Success, Failure>: Ticking where Failure: 
             if let task = self.task {
                 Logger.debug(debugEvents, "Event bound to task was deinited, cancelling task")
                 task.cancel()
-                self.state = .finished
+                self.finished = true
             } else {
                 Logger.debug(debugEvents, "Event bound to task was deinited but task not handle not available yet")
             }
         }
     }
-
-    var finished: Bool {
-        return self.state == .finished
-    }
-}
-
-/// The state of an EventTicking.
-enum EventTickingState {
-    /// The task is running.
-    case running
-
-    /// The task has finished or has been cancelled.
-    case finished
 }
