@@ -32,6 +32,8 @@ class MainActivity: Activity {
         }
     }
 
+    @Animate var animationTest: Float = 0
+
     override public func onCreate() async {
         Logger.info("Example main activity created")
     }

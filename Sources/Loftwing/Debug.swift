@@ -22,3 +22,9 @@ let debugLayout = false
 
 /// Set to `true` to enable debug message of events and tasks.
 let debugEvents = false
+
+/// Set to `true` to enable debug message of animations.
+let debugAnimations = false
+
+/// Set to `true` to enable debug message of all tickings.
+let debugTickings = false || debugAnimations || debugEvents

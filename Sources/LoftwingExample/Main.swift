@@ -16,10 +16,31 @@
 
 import Loftwing
 
-// Create and run the application.
+// Declare a Loftwing application.
 @main
-struct Main {
-    public static func main() async {
-        try! await ExampleApplication().main()
+class ExampleApplication: Application {
+    /// Called when the app gets initialized.
+    required init() {
+
+    }
+
+    // Application title
+    var title: String {
+        "Loftwing Example Application"
+    }
+
+    // Initial window mode and size
+    var initialWindowMode: WindowMode {
+        .windowed(1280, 720)
+    }
+
+    // Initial graphics API, nil being "select automatically"
+    var initialGraphicsAPI: GraphicsAPI? {
+        nil
+    }
+
+    // First activity to be pushed when the app starts
+    var mainActivity: Activity {
+        MainActivity()
     }
 }

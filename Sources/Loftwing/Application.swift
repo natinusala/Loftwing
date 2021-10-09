@@ -14,32 +14,123 @@
     limitations under the License.
 */
 
-/// A Loftwing application.
-@MainActor
-open class Application {
-    /// Application initial window mode.
-    open var initialWindowMode: WindowMode {
-        WindowMode.borderlessWindow
-    }
+/// A Loftwing application. As the library is designed to make fullscreen,
+/// single window / kiosk apps, running multiple apps per executable target is not
+/// supported.
+///
+/// To use, create a struct that conforms to that protocol and add the `@main`
+/// attribute.
+public protocol Application {
+    init()
 
-    /// Application initial graphics context. Use nil to autodetect and pick the
+    /// Application title.
+    var title: String { get }
+
+    /// Initial window mode.
+    var initialWindowMode: WindowMode { get }
+
+    /// Initial graphics context. Use nil to autodetect and pick the
     /// first one that works.
-    open var initialGraphicsAPI: GraphicsAPI? {
-        nil
-    }
+    var initialGraphicsAPI: GraphicsAPI? { get }
 
     /// The first activity started by the application.
-    open var mainActivity: Activity {
-        EmptyActivity()
+    var mainActivity: Activity { get }
+}
+
+extension Application {
+    /// Main entry point of an application. Use the `@main` attribute to
+    /// use it in your executable target. Calling it manually is not supported.
+    public static func main() async throws {
+        try await InternalApplication(with: self.init()).main()
+    }
+}
+
+/// Responsible for running "tickings" every frame as well as managing their
+/// lifecycle.
+public class Runner {
+    var tickings: [Ticking] = []
+
+    /// Is the runner currently inside the `frame()` method?
+    var insideFrame = false
+
+    /// Every ticking added while another ticking is in its `frame()` method.
+    var newTickings: [Ticking] = []
+
+    /// Adds a new ticking to the runner loop.
+    public func addTicking(_ ticking: Ticking) {
+        // If we are inside our own `frame()` method, add them to the temporary
+        // list to avoid mutating the list as we iterate over it, and to avoid
+        // running the new ticking for one more frame than necessary (causes jitters).
+        if self.insideFrame {
+            self.newTickings.append(ticking)
+        }
+        else {
+            self.tickings.append(ticking)
+        }
     }
 
-    /// Application window title.
-    open var title: String {
-        "Loftwing App"
-    }
+    /// Run every frame to run tickings and collect finished ones.
+    func frame() {
+        self.insideFrame = true
 
-    var window: Window!
-    var platform: Platform!
+        // Run every ticking
+        for ticking in self.tickings {
+            ticking.frame()
+        }
+
+        // Add every "new" ticking
+        // This is in case new tickings are added in one of the tickings `frame()`
+        // call. As we don't want to mutate the list as we iterate over it, we need
+        // to collect every "new" ticking in a temporary list and add them all here.
+        self.tickings.append(contentsOf: self.newTickings)
+        self.newTickings = []
+
+        // Collect every finished ticking (= keep every ticking that's not finished)
+        self.tickings = self.tickings.filter {
+            if $0.finished {
+                Logger.debug(debugTickings, "Collecting finished ticking")
+                return false
+            }
+
+            return true
+        }
+
+        self.insideFrame = false
+    }
+}
+
+/// A "ticking" is something that runs every frame until it's finished.
+/// Examples are: animations, background tasks...
+public protocol Ticking {
+    /// Method called every frame to run the ticking.
+    func frame()
+
+    /// Must return `true` if the ticking is finished and should be collected.
+    var finished: Bool { get }
+}
+
+/// The "context" of an app can be retreived from anywhere using `getContext().
+/// Contains app state, metadata and useful "managers".
+@MainActor
+public protocol Context {
+    var runner: Runner { get }
+}
+
+/// Context shared instance.
+private var contextSharedInstance: Context!
+
+/// Allows to get the running app "context" instance.
+public func getContext() -> Context {
+    return contextSharedInstance
+}
+
+/// Internal application singleton.
+@MainActor
+open class InternalApplication: Context {
+    let configuration: Application
+
+    var window: Window
+    var platform: Platform
 
     var shouldStop = false
     var stopCallback: (() -> ())? = nil
@@ -49,13 +140,17 @@ open class Application {
 
     let clearPaint = Paint(color: Color.black)
 
+    public var runner = Runner()
+
     /// Creates an application.
-    public init() throws {
+    init(with configuration: Application) throws {
+        self.configuration = configuration
+
         // Initialize platform
         self.platform = try createPlatform(
-            initialWindowMode: self.initialWindowMode,
-            initialGraphicsAPI: try self.initialGraphicsAPI ?? GraphicsAPI.findFirstAvailable(),
-            initialTitle: self.title
+            initialWindowMode: configuration.initialWindowMode,
+            initialGraphicsAPI: try configuration.initialGraphicsAPI ?? GraphicsAPI.findFirstAvailable(),
+            initialTitle: configuration.title
         )
 
         // Create window
@@ -66,12 +161,15 @@ open class Application {
             self.activitiesStackLayer
             // TODO: OverlayLayer, which is a subclass of ViewLayer
         ]
+
+        // Register ourself as the running context
+        contextSharedInstance = self
     }
 
     /// Runs the application until closed, either by the user
     /// or through exit().
     public func main() async throws {
-        // Create window
+        // Load window
         do {
             try self.window.reload()
 
@@ -85,7 +183,7 @@ open class Application {
         }
 
         // Push main activity
-        await self.activitiesStackLayer.push(activity: self.mainActivity)
+        await self.activitiesStackLayer.push(activity: self.configuration.mainActivity)
 
         // Resize every layer
         for layer in self.layers {
@@ -93,9 +191,9 @@ open class Application {
         }
 
         // Main loop
-        let queue = TaskQueue.sharedInstance
         while(true) {
             // Poll platform, see if we should exit
+            // TODO: handle ctrlc to gracefully exit
             if self.platform.poll() || self.shouldStop {
                 // Exit
                 Logger.info("Exiting...")
@@ -123,12 +221,12 @@ open class Application {
             // Swap buffers
             self.window.swapBuffers()
 
+            // Run runner for one frame
+            self.runner.frame()
+
             // Sleep between frames
             // TODO: sleep better with dynamic rate control
             await Task.sleep(16666666)
-
-            // Collect tasks
-            await queue.collect()
         }
     }
 

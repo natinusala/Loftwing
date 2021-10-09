@@ -23,7 +23,8 @@ public protocol Layer: FrameProtocol {
     func resizeToFit(width: Float, height: Float)
 }
 
-/// Protocol for anything that has a `frame` method: layers, views, activities...
+/// Protocol for anything that has a `frame(canvas:)` method and
+/// draws things onscreen: layers, views, activities...
 public protocol FrameProtocol {
     /// Runs for one frame.
     func frame(canvas: Canvas)
