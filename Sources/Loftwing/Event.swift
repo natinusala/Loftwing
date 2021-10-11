@@ -14,6 +14,22 @@
     limitations under the License.
 */
 
+/// An observer is the combination of a callback and its owner.
+/// The observer only keeps a weak reference to the owner. This allows
+/// automatically unregistering the observer once the owner gets released.
+class Observer<CallbackParameter> {
+    typealias Callback = (CallbackParameter) async -> ()
+    typealias Owner = AnyObject
+
+    let callback: Callback
+    weak var owner: Owner?
+
+    init(owner: Owner, callback: @escaping Callback) {
+        self.callback = callback
+        self.owner = owner
+    }
+}
+
 /// An "event" is a channel from which you can signal something to
 /// observers of that signal.
 ///
@@ -27,9 +43,9 @@
 /// their callback), call the fire(_ parameter:) method.
 /// TODO: rework CallbackParameter once Swift has variadic generic parameters
 class Event<CallbackParameter> {
-    typealias ObserverCallback = (CallbackParameter) async -> ()
+    typealias ObserverType = Observer<CallbackParameter>
 
-    var observers: [ObserverCallback] = []
+    var observers: [ObserverType] = []
 
     /// Fires the event, sending a signal to every observer. Their callback
     /// will be executed with the given parameters.
@@ -52,19 +68,33 @@ class Event<CallbackParameter> {
         let runner = await getContext().runner
 
         for observer in self.observers {
-            Logger.debug(debugEvents, "Firing event for \(self.observers.count) observers")
-            runner.addTicking(EventTicking<CallbackParameter, Void, Error>(event: self) {
-                await observer(parameter)
-            })
+            if observer.owner != nil {
+                Logger.debug(debugEvents, "Firing event for \(self.observers.count) observers")
+                runner.addTicking(EventTicking<CallbackParameter, Void, Error>(event: self) {
+                    await observer.callback(parameter)
+                })
+            }
+            else {
+                Logger.debug(debugEvents, "Observer owner has been released, not firing the event")
+            }
         }
+
+        // Lazily remove every observer with a released owner
+        // TODO: test that this actually works
+        self.observers = self.observers.filter { $0.owner != nil }
 
         return true
     }
 
     /// Starts observing the event. The given callback will be executed asynchronously
     /// whenever someone fires the event.
-    public func observe(with callback: @escaping ObserverCallback) {
-        self.observers.append(callback)
+    /// The owner is used to automatically remove the observer when the owner gets
+    /// released (we keep a weak reference to the owner to do so).
+    public func observe(
+        owner: ObserverType.Owner,
+        with callback: @escaping ObserverType.Callback) 
+    {
+        self.observers.append(Observer(owner: owner, callback: callback))
     }
 }
 

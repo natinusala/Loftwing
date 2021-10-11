@@ -31,7 +31,7 @@ open class Activity: FrameProtocol {
 
     public init() {
         // Register to our own creation event
-        self.creationEvent.observe {
+        self.creationEvent.observe(owner: self) {
             await self.onCreate()
         }
     }
