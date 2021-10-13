@@ -20,26 +20,35 @@
 ///
 /// To use, create a struct that conforms to that protocol and add the `@main`
 /// attribute.
-// TODO: make this a class and not a protocol to have default values?
-public protocol Application {
-    init()
+open class Application {
+    required public init() {}
 
     /// Application title.
-    var title: String { get }
+    open var title: String {
+        "Loftwing App"
+    }
 
     /// Initial window mode.
-    var initialWindowMode: WindowMode { get }
+    open var initialWindowMode: WindowMode {
+        .borderlessWindow
+    }
 
     /// Initial graphics context. Use nil to autodetect and pick the
     /// first one that works.
-    var initialGraphicsAPI: GraphicsAPI? { get }
+    open var initialGraphicsAPI: GraphicsAPI? {
+        nil
+    }
 
     /// The first activity started by the application.
-    var mainActivity: Activity { get }
+    open var mainActivity: Activity {
+        Activity()
+    }
 
     /// The layer containing the "content" of your app: a game, a video player...
     /// It will be placed under the activities layer.
-    var contentLayer: Layer? { get }
+    open var contentLayer: Layer? {
+        nil
+    }
 }
 
 /// The "context" of an app can be retreived from anywhere using `getContext().
