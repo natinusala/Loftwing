@@ -21,7 +21,14 @@
 /// To use, create a struct that conforms to that protocol and add the `@main`
 /// attribute.
 open class Application {
-    required public init() {}
+    let creationEvent = Event<Void>()
+
+    required public init() {
+        // Observe our own creation event
+        self.creationEvent.observe(owner: self) {
+            await self.onCreate()
+        }
+    }
 
     /// Application title.
     open var title: String {
@@ -48,6 +55,11 @@ open class Application {
     /// It will be placed under the activities layer.
     open var contentLayer: Layer? {
         nil
+    }
+
+    /// Method called when the application is created and ready to run.
+    open func onCreate() async {
+        // Nothing by default
     }
 }
 
@@ -127,6 +139,9 @@ open class InternalApplication: Context {
         for layer in self.layers {
             layer.resizeToFit(width: window.width, height: window.height)
         }
+
+        // Fire the creation event when everything is ready
+        await self.configuration.creationEvent.fire()
 
         // Main loop
         while(true) {

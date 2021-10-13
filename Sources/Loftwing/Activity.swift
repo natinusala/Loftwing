@@ -30,7 +30,7 @@ open class Activity: FrameProtocol {
     let creationEvent = Event<Void>()
 
     public init() {
-        // Register to our own creation event
+        // Observe our own creation event
         self.creationEvent.observe(owner: self) {
             await self.onCreate()
         }
