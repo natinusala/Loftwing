@@ -20,6 +20,7 @@
 ///
 /// To use, create a struct that conforms to that protocol and add the `@main`
 /// attribute.
+// TODO: make this a class and not a protocol to have default values?
 public protocol Application {
     init()
 
@@ -35,86 +36,10 @@ public protocol Application {
 
     /// The first activity started by the application.
     var mainActivity: Activity { get }
-}
 
-extension Application {
-    /// Main entry point of an application. Use the `@main` attribute to
-    /// use it in your executable target. Calling it manually is not supported.
-    public static func main() async throws {
-        try await InternalApplication(with: self.init()).main()
-    }
-}
-
-/// Responsible for running "tickings" every frame as well as managing their
-/// lifecycle.
-public class Runner {
-    var tickings: [Ticking] = []
-
-    /// Is the runner currently inside the `frame()` method?
-    var insideFrame = false
-
-    /// Every ticking added while another ticking is in its `frame()` method.
-    var newTickings: [Ticking] = []
-
-    /// Adds a new ticking to the runner loop.
-    public func addTicking(_ ticking: Ticking) {
-        // Ensure the ticking isn't already in
-        for t in self.tickings {
-            if t === ticking {
-                return
-            }
-        }
-
-        // If we are inside our own `frame()` method, add them to the temporary
-        // list to avoid mutating the list as we iterate over it, and to avoid
-        // running the new ticking for one more frame than necessary (causes jitters).
-        if self.insideFrame {
-            self.newTickings.append(ticking)
-        }
-        else {
-            self.tickings.append(ticking)
-        }
-    }
-
-    /// Run every frame to run tickings and collect finished ones.
-    func frame() {
-        self.insideFrame = true
-
-        // Run every ticking
-        for ticking in self.tickings {
-            ticking.frame()
-        }
-
-        // Add every "new" ticking
-        // This is in case new tickings are added in one of the tickings `frame()`
-        // call. As we don't want to mutate the list as we iterate over it, we need
-        // to collect every "new" ticking in a temporary list and add them all here.
-        self.tickings.append(contentsOf: self.newTickings)
-        self.newTickings = []
-
-        // Collect every finished ticking (= keep every ticking that's not finished)
-        self.tickings = self.tickings.filter {
-            if $0.finished {
-                Logger.debug(debugTickings, "Collecting finished ticking")
-                return false
-            }
-
-            return true
-        }
-
-        self.insideFrame = false
-    }
-}
-
-/// A "ticking" is something that runs every frame until it's finished.
-/// Examples are: animations, background tasks...
-/// Can only be used on classes.
-public protocol Ticking: AnyObject {
-    /// Method called every frame to run the ticking.
-    func frame()
-
-    /// Must return `true` if the ticking is finished and should be collected.
-    var finished: Bool { get }
+    /// The layer containing the "content" of your app: a game, a video player...
+    /// It will be placed under the activities layer.
+    var contentLayer: Layer? { get }
 }
 
 /// The "context" of an app can be retreived from anywhere using `getContext().
@@ -122,14 +47,6 @@ public protocol Ticking: AnyObject {
 @MainActor
 public protocol Context {
     var runner: Runner { get }
-}
-
-/// Context shared instance.
-var contextSharedInstance: Context!
-
-/// Allows to get the running app "context" instance.
-public func getContext() -> Context {
-    return contextSharedInstance
 }
 
 /// Internal application singleton.
@@ -169,6 +86,10 @@ open class InternalApplication: Context {
             self.activitiesStackLayer
             // TODO: OverlayLayer, which is a subclass of ViewLayer
         ]
+
+        if let contentLayer = configuration.contentLayer {
+            self.layers.insert(contentLayer, at: 0)
+        }
 
         // Register ourself as the running context
         contextSharedInstance = self
@@ -258,5 +179,94 @@ open class InternalApplication: Context {
     /// Called when the app exits.
     open func onExit() async {
         // Nothing by default
+    }
+}
+
+
+/// Responsible for running "tickings" every frame as well as managing their
+/// lifecycle.
+public class Runner {
+    var tickings: [Ticking] = []
+
+    /// Is the runner currently inside the `frame()` method?
+    var insideFrame = false
+
+    /// Every ticking added while another ticking is in its `frame()` method.
+    var newTickings: [Ticking] = []
+
+    /// Adds a new ticking to the runner loop.
+    public func addTicking(_ ticking: Ticking) {
+        // Ensure the ticking isn't already in
+        for t in self.tickings {
+            if t === ticking {
+                return
+            }
+        }
+
+        // If we are inside our own `frame()` method, add them to the temporary
+        // list to avoid mutating the list as we iterate over it, and to avoid
+        // running the new ticking for one more frame than necessary (causes jitters).
+        if self.insideFrame {
+            self.newTickings.append(ticking)
+        }
+        else {
+            self.tickings.append(ticking)
+        }
+    }
+
+    /// Run every frame to run tickings and collect finished ones.
+    func frame() {
+        self.insideFrame = true
+
+        // Run every ticking
+        for ticking in self.tickings {
+            ticking.frame()
+        }
+
+        // Add every "new" ticking
+        // This is in case new tickings are added in one of the tickings `frame()`
+        // call. As we don't want to mutate the list as we iterate over it, we need
+        // to collect every "new" ticking in a temporary list and add them all here.
+        self.tickings.append(contentsOf: self.newTickings)
+        self.newTickings = []
+
+        // Collect every finished ticking (= keep every ticking that's not finished)
+        self.tickings = self.tickings.filter {
+            if $0.finished {
+                Logger.debug(debugTickings, "Collecting finished ticking")
+                return false
+            }
+
+            return true
+        }
+
+        self.insideFrame = false
+    }
+}
+
+/// A "ticking" is something that runs every frame until it's finished.
+/// Examples are: animations, background tasks...
+/// Can only be used on classes.
+public protocol Ticking: AnyObject {
+    /// Method called every frame to run the ticking.
+    func frame()
+
+    /// Must return `true` if the ticking is finished and should be collected.
+    var finished: Bool { get }
+}
+
+/// Context shared instance.
+var contextSharedInstance: Context!
+
+/// Allows to get the running app "context" instance.
+public func getContext() -> Context {
+    return contextSharedInstance
+}
+
+extension Application {
+    /// Main entry point of an application. Use the `@main` attribute to
+    /// use it in your executable target. Calling it manually is not supported.
+    public static func main() async throws {
+        try await InternalApplication(with: self.init()).main()
     }
 }
