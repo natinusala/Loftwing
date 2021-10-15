@@ -19,28 +19,23 @@ import Loftwing
 // Declare a Loftwing application.
 @main
 class ExampleApplication: Application {
-    /// Called when the app gets initialized.
-    required init() {
-
-    }
-
     // Application title
-    var title: String {
+    override var title: String {
         "Loftwing Example Application"
     }
 
     // Initial window mode and size
-    var initialWindowMode: WindowMode {
+    override var initialWindowMode: WindowMode {
         .windowed(1280, 720)
     }
 
     // Initial graphics API, nil being "select automatically"
-    var initialGraphicsAPI: GraphicsAPI? {
+    override var initialGraphicsAPI: GraphicsAPI? {
         nil
     }
 
     // First activity to be pushed when the app starts
-    var mainActivity: Activity {
+    override var mainActivity: Activity {
         MainActivity()
     }
 }
