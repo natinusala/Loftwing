@@ -39,11 +39,13 @@ open class Box: View {
 
     /// The content of that box, statically defined.
     /// Used when creating custom views.
+    @MainActor
     open var content: View {
         EmptyView()
     }
 
     /// Creates a box with the given children.
+    @MainActor
     public init(_ axis: Axis, @BoxBuilder builder: () -> [View]) {
         super.init()
 

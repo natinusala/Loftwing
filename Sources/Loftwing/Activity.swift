@@ -21,6 +21,7 @@
 /// the content property.
 open class Activity: FrameProtocol {
     /// The top-level view of that activity.
+    @MainActor
     open var content: View {
         EmptyView()
     }
@@ -49,6 +50,7 @@ open class Activity: FrameProtocol {
     open func onCreate() async {}
 
     /// Creates the content tree and stores it in the activity.
+    @MainActor
     func mountContent() {
         // Never mount content twice
         if self.mountedContent != nil {

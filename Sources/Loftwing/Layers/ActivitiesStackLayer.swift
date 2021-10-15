@@ -46,6 +46,7 @@ class ActivitiesStackLayer: Layer {
 class ActivitiesStack: Sequence {
     var stack: [Activity] = []
 
+    @MainActor
     func push(activity: Activity) async {
         self.stack.append(activity)
 

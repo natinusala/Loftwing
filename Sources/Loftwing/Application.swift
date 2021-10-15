@@ -82,12 +82,14 @@ open class InternalApplication: Context {
     let activitiesStackLayer = ActivitiesStackLayer()
     var layers: [Layer] = []
 
-    let clearPaint = Paint(color: Color.black)
+    let clearPaint: Paint
 
     public var runner = Runner()
 
     /// Creates an application.
     init(with configuration: Application) async throws {
+        self.clearPaint = await Paint(color: Color.black)
+
         self.configuration = configuration
 
         // Initialize platform

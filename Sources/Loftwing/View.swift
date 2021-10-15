@@ -92,6 +92,7 @@ open class View: FrameProtocol {
         self.onLayoutChanged(parentX: 0, parentY: 0)
     }
 
+    @MainActor
     public init() {
         self.ygNode = YGNodeNew()
     }
@@ -248,6 +249,7 @@ public class EmptyView: View, BindableView {
 public class Rectangle: View, BindableView {
     let paint: Paint
 
+    @MainActor
     public init(color: Color) {
         self.paint = Paint(color: color)
     }
