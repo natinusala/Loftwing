@@ -23,7 +23,7 @@
 open class Application {
     let creationEvent = Event<Void>()
 
-    required public init() {
+    required public init() async {
         // Observe our own creation event
         self.creationEvent.observe(owner: self) {
             await self.onCreate()
