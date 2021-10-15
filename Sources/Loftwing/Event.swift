@@ -65,7 +65,7 @@ class Event<CallbackParameter> {
         }
 
         // Add a ticking for every observer
-        let runner = await getContext().runner
+        let runner = getContext().runner
 
         for observer in self.observers {
             if observer.owner != nil {

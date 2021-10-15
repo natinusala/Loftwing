@@ -98,6 +98,7 @@ open class View: FrameProtocol {
 
     /// Called every frame. Do not override to draw your view's content, override
     /// `draw()` instead.
+    @MainActor
     open func frame(canvas: Canvas) {
         // Layout if needed
         if self.dirty {
@@ -115,6 +116,7 @@ open class View: FrameProtocol {
 
     /// Called every frame to draw the view onscreen. Views may not draw outside of
     /// their bounds, they can be clipped if they do so.
+    @MainActor
     open func draw(canvas: Canvas) {
         // Does nothing by default
     }
@@ -250,6 +252,7 @@ public class Rectangle: View, BindableView {
         self.paint = Paint(color: color)
     }
 
+    @MainActor
     open override func draw(canvas: Canvas) {
         canvas.drawRect(
             x: self.x,

@@ -36,7 +36,7 @@ class GLFWPlatform: Platform {
         initialWindowMode windowMode: WindowMode,
         initialGraphicsAPI graphicsAPI: GraphicsAPI,
         initialTitle title: String
-    ) throws {
+    ) async throws {
         // Set error callback
         glfwSetErrorCallback {code, error in
             if let errorString = error {
@@ -53,20 +53,21 @@ class GLFWPlatform: Platform {
         }
 
         // Create the window
-        self.glfwWindow = try GLFWWindow(
+        self.glfwWindow = try await GLFWWindow(
             initialWindowMode: windowMode,
             initialGraphicsAPI: graphicsAPI,
             initialTitle: title
         )
     }
 
-    func poll() -> Bool {
+    func poll() async -> Bool {
         glfwPollEvents()
-        return self.glfwWindow.shouldClose()
+        return await self.glfwWindow.shouldClose()
     }
 }
 
 /// A GLFW window.
+@MainActor
 class GLFWWindow: Window {
     let windowMode: WindowMode
     let graphicsAPI: GraphicsAPI

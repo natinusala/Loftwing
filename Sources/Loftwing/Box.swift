@@ -94,6 +94,7 @@ open class Box: View {
         return self
     }
 
+    @MainActor
     open override func frame(canvas: Canvas) {
         super.frame(canvas: canvas)
 

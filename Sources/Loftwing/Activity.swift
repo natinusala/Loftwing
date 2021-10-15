@@ -37,6 +37,7 @@ open class Activity: FrameProtocol {
     }
 
     /// Runs the activity for one frame.
+    @MainActor
     public func frame(canvas: Canvas) {
         // Draw the mounted view.
         if let mountedView = self.mountedContent {

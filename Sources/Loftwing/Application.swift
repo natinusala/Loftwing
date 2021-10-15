@@ -65,13 +65,11 @@ open class Application {
 
 /// The "context" of an app can be retreived from anywhere using `getContext().
 /// Contains app state, metadata and useful "managers".
-@MainActor
 public protocol Context {
     var runner: Runner { get }
 }
 
 /// Internal application singleton.
-@MainActor
 open class InternalApplication: Context {
     let configuration: Application
 
@@ -89,11 +87,11 @@ open class InternalApplication: Context {
     public var runner = Runner()
 
     /// Creates an application.
-    init(with configuration: Application) throws {
+    init(with configuration: Application) async throws {
         self.configuration = configuration
 
         // Initialize platform
-        self.platform = try createPlatform(
+        self.platform = try await createPlatform(
             initialWindowMode: configuration.initialWindowMode,
             initialGraphicsAPI: try configuration.initialGraphicsAPI ?? GraphicsAPI.findFirstAvailable(),
             initialTitle: configuration.title
@@ -118,6 +116,7 @@ open class InternalApplication: Context {
 
     /// Runs the application until closed, either by the user
     /// or through exit().
+    @MainActor
     public func main() async throws {
         // Load window
         do {
@@ -147,7 +146,7 @@ open class InternalApplication: Context {
         while(true) {
             // Poll platform, see if we should exit
             // TODO: handle ctrlc to gracefully exit
-            if self.platform.poll() || self.shouldStop {
+            if await self.platform.poll() || self.shouldStop {
                 // Exit
                 Logger.info("Exiting...")
 

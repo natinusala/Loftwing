@@ -18,6 +18,7 @@
 class ActivitiesStackLayer: Layer {
     var stack: ActivitiesStack = ActivitiesStack()
 
+    @MainActor
     func frame(canvas: Canvas) {
         // Draw all activities
         // TODO: do it better (see brls)

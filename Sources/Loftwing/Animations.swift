@@ -161,7 +161,7 @@ public class Animation {
         self.currentTicking = ticking
 
         // Enqueue the new animation
-        await getContext().runner.addTicking(ticking)
+        getContext().runner.addTicking(ticking)
 
         // Return handle
         return RegularAnimationHandle(for: self)
