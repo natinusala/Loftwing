@@ -43,9 +43,4 @@ public actor Logger {
             print("\("[DEBUG]".green) \(message)")
         }
     }
-
-    /// Logs a debug message.
-    public static func debug(_ message: String) {
-        Logger.debug(true, message)
-    }
 }
