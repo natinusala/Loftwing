@@ -21,7 +21,6 @@ public enum ImageError: Error {
     case noTexture
     case invalidTexture
     case invalidContext
-    case invalidColorSpace
 }
 
 
@@ -64,17 +63,13 @@ public class GPUTextureImage: Image {
             throw ImageError.invalidContext
         }
 
-        guard let colorSpace = getContext().colorSpace else {
-            throw ImageError.invalidColorSpace
-        }
-
         self.native = sk_image_new_from_texture(
             context,
             texture.native,
             TOP_LEFT_GR_SURFACE_ORIGIN,
             texture.pixelFormat.skiaColorType,
             OPAQUE_SK_ALPHATYPE, // TODO: handle alpha somehow
-            colorSpace,
+            getContext().colorSpace,
             {_ in},
             nil
         )

@@ -24,6 +24,10 @@ enum GLFWError: Error {
     case cannotCreateWindow
 }
 
+/// Set to `true` to enable sRGB color space.
+/// TODO: make it an app setting instead of an hardcoded flag
+let enableSRGB = false
+
 /// GLFW as a platform, handling window and inputs.
 class GLFWPlatform: Platform {
     let glfwWindow: GLFWWindow
@@ -109,7 +113,9 @@ class GLFWWindow: Window {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2)
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
-        glfwWindowHint(GLFW_SRGB_CAPABLE, GL_TRUE)
+        if enableSRGB {
+            glfwWindowHint(GLFW_SRGB_CAPABLE, GL_TRUE)
+        }
         glfwWindowHint(GLFW_STENCIL_BITS, 0)
         glfwWindowHint(GLFW_ALPHA_BITS, 0)
         glfwWindowHint(GLFW_DEPTH_BITS, 0)
@@ -176,9 +182,12 @@ class GLFWWindow: Window {
         // Initialize graphics API
         glfwMakeContextCurrent(window)
 
-        switch self.graphicsAPI {
-            case .gl:
-                glEnable(UInt32(GL_FRAMEBUFFER_SRGB))
+        // Enable sRGB if requested
+        if enableSRGB {
+            switch self.graphicsAPI {
+                case .gl:
+                    glEnable(UInt32(GL_FRAMEBUFFER_SRGB))
+            }
         }
 
         var finalWindowWidth: Int32 = 0
@@ -198,7 +207,7 @@ class GLFWWindow: Window {
 
                 var framebufferInfo = gr_gl_framebufferinfo_t(
                     fFBOID: 0,
-                    fFormat: UInt32(GL_SRGB8_ALPHA8)
+                    fFormat: UInt32(enableSRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8)
                 )
 
                 backendRenderTarget = gr_backendrendertarget_new_gl(
@@ -218,7 +227,7 @@ class GLFWWindow: Window {
             throw SkiaError.cannotInitSkiaTarget
         }
 
-        let colorSpace = sk_colorspace_new_srgb()
+        let colorSpace: OpaquePointer? = enableSRGB ? sk_colorspace_new_srgb() : nil
         self.colorSpace = colorSpace
 
         let surface = sk_surface_new_backend_render_target(
