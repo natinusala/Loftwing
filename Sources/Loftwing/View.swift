@@ -256,11 +256,16 @@ public class Rectangle: View, BindableView {
 
     @MainActor
     open override func draw(canvas: Canvas) {
-        canvas.drawRect(
+        // TODO: cache that rect, reconstruct it on layout only
+        let rect = Rect(
             x: self.x,
             y: self.y,
             width: self.width,
-            height: self.height,
+            height: self.height
+        )
+
+        canvas.drawRect(
+            rect,
             paint: self.paint
         )
     }

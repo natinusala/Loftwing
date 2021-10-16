@@ -24,19 +24,25 @@ public protocol Canvas {
 
     /// Draws the given paint in the given rectangle region.
     func drawRect(
-        x: Float,
-        y: Float,
-        width: Float,
-        height: Float,
+        _ rect: Rect,
         paint: Paint
     )
 
-    /// Draws the given image.
+    /// Draws the given image in its original size.
     func drawImage(
         _ image: Image,
         x: Float,
         y: Float,
         paint: Paint?
+    )
+
+    /// Draws the given image and stretch it to fit the given rect.
+    func drawImage(
+        _ image: Image,
+        x: Float,
+        y: Float,
+        paint: Paint?,
+        destRect: Rect
     )
 }
 
@@ -53,22 +59,18 @@ public class SkiaCanvas: Canvas {
     }
 
     public func drawRect(
-        x: Float,
-        y: Float,
-        width: Float,
-        height: Float,
+        _ rect: Rect,
         paint: Paint
     ) {
-        var rect = sk_rect_t(left: x, top: y, right: x + width, bottom: y + height)
-
+        var skiaRect = rect.skiaRect
         sk_canvas_draw_rect(
             self.native,
-            &rect,
+            &skiaRect,
             paint.native
         )
     }
 
-    public     func drawImage(
+    public func drawImage(
         _ image: Image,
         x: Float,
         y: Float,
@@ -79,6 +81,31 @@ public class SkiaCanvas: Canvas {
             image.native,
             x,
             y,
+            paint?.native ?? nil
+        )
+    }
+
+    public func drawImage(
+        _ image: Image,
+        x: Float,
+        y: Float,
+        paint: Paint?,
+        destRect: Rect
+    ) {
+        var srcRect = sk_rect_t(
+            left: 0,
+            top: 0,
+            right: image.width,
+            bottom: image.height
+        )
+
+        var destRect = destRect.skiaRect
+
+        sk_canvas_draw_image_rect(
+            self.native,
+            image.native,
+            &srcRect,
+            &destRect,
             paint?.native ?? nil
         )
     }

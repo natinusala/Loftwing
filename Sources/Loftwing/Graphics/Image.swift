@@ -24,14 +24,34 @@ public enum ImageError: Error {
     case invalidColorSpace
 }
 
+
 /// Represents a two-dimensional pixels array, either coming from a picture or
 /// a GPU texture.
 @MainActor
-public class Image {
-    let native: OpaquePointer?
+public protocol Image {
+    /// Pointer to the native Skia image.
+    var native: OpaquePointer? { get }
+
+    var width: Float { get }
+    var height: Float { get }
+}
+
+@MainActor
+public class GPUTextureImage: Image {
+    public let native: OpaquePointer?
+
+    let texture: GPUTexture
+
+    public var width: Float {
+        return self.texture.width
+    }
+
+    public var height: Float {
+        return self.texture.height
+    }
 
     /// Creates a new image from the given GPU texture.
-    public init(fromTexture texture: GPUTexture) throws {
+    public init(texture: GPUTexture) throws {
         if texture.native == nil {
             throw ImageError.noTexture
         }
@@ -62,6 +82,8 @@ public class Image {
         if self.native == nil {
             throw ImageError.unableToCreateImage
         }
+
+        self.texture = texture
     }
 
     // TODO: deinit?
