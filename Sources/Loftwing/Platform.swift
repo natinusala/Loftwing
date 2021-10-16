@@ -104,4 +104,13 @@ protocol Window {
 
     /// Called at the end of every frame
     func swapBuffers()
+
+    /// Skia color space.
+    var colorSpace: OpaquePointer? { get }
+
+    /// Graphics API.
+    var graphicsAPI: GraphicsAPI { get }
+
+    /// Skia context.
+    var skiaContext: OpaquePointer? { get }
 }

@@ -76,7 +76,8 @@ class GLFWWindow: Window {
     var window: OpaquePointer? = nil // GLFW window
 
     var canvas: Canvas? = nil // Skia canvas
-    var context: OpaquePointer? = nil // Skia context
+    var skiaContext: OpaquePointer? = nil // Skia context
+    var colorSpace: OpaquePointer? = nil
 
     var width: Float = 0
     var height: Float = 0
@@ -92,7 +93,7 @@ class GLFWWindow: Window {
     }
 
     func swapBuffers() {
-        gr_direct_context_flush(self.context)
+        gr_direct_context_flush(self.skiaContext)
         glfwSwapBuffers(self.window)
     }
 
@@ -193,7 +194,7 @@ class GLFWWindow: Window {
         switch self.graphicsAPI {
             case .gl:
                 let interface = gr_glinterface_create_native_interface()
-                self.context = gr_direct_context_make_gl(interface)
+                self.skiaContext = gr_direct_context_make_gl(interface)
 
                 var framebufferInfo = gr_gl_framebufferinfo_t(
                     fFBOID: 0,
@@ -209,7 +210,7 @@ class GLFWWindow: Window {
                 )
         }
 
-        guard let context = self.context else {
+        guard let context = self.skiaContext else {
             throw SkiaError.cannotInitSkiaContext
         }
 
@@ -217,12 +218,15 @@ class GLFWWindow: Window {
             throw SkiaError.cannotInitSkiaTarget
         }
 
+        let colorSpace = sk_colorspace_new_srgb()
+        self.colorSpace = colorSpace
+
         let surface = sk_surface_new_backend_render_target(
             context,
             target,
             BOTTOM_LEFT_GR_SURFACE_ORIGIN,
             RGBA_8888_SK_COLORTYPE,
-            sk_colorspace_new_srgb(),
+            colorSpace,
             nil
         )
 
@@ -242,7 +246,7 @@ class GLFWWindow: Window {
         self.canvas = SkiaCanvas(nativeCanvas: nativeCanvas)
     }
 
-    // TODO: glfwDestroyWindow + glfwTerminate
+    // TODO: glfwDestroyWindow + glfwTerminate, free colorspace
 
     func shouldClose() -> Bool {
         return glfwWindowShouldClose(self.window) == 1

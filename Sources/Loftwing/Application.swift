@@ -67,6 +67,9 @@ open class Application {
 /// Contains app state, metadata and useful "managers".
 public protocol Context {
     var runner: Runner { get }
+    var colorSpace: OpaquePointer? { get }
+    var graphicsAPI: GraphicsAPI { get }
+    var skiaContext: OpaquePointer? { get }
 }
 
 /// Internal application singleton.
@@ -85,6 +88,9 @@ open class InternalApplication: Context {
     let clearPaint: Paint
 
     public var runner = Runner()
+    public var colorSpace: OpaquePointer?
+    public var graphicsAPI: GraphicsAPI
+    public var skiaContext: OpaquePointer?
 
     /// Creates an application.
     init(with configuration: Application) async throws {
@@ -101,6 +107,9 @@ open class InternalApplication: Context {
 
         // Create window
         self.window = self.platform.window
+
+        // Set context properties
+        self.graphicsAPI = await window.graphicsAPI
 
         // Create layers
         self.layers = [
@@ -123,6 +132,10 @@ open class InternalApplication: Context {
         // Load window
         do {
             try self.window.reload()
+
+            //Refresh context
+            self.skiaContext = window.skiaContext
+            self.colorSpace = window.colorSpace
 
             // Ensure the window has a Skia canvas
             if self.window.canvas == nil {

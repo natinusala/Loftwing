@@ -20,3 +20,6 @@
 #include <skia_loftwing/include/c/sk_surface.h>
 #include <skia_loftwing/include/c/sk_colorspace.h>
 #include <skia_loftwing/include/c/sk_paint.h>
+#include <skia_loftwing/include/c/sk_image.h>
+#include <skia_loftwing/include/c/sk_bitmap.h>
+#include <skia_loftwing/include/c/sk_pixmap.h>

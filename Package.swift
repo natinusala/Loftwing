@@ -17,6 +17,9 @@
 */
 import PackageDescription
 
+/// Should we link against the debug Skia build?
+let debugSkia = false
+
 let package = Package(
     name: "Loftwing",
     products: [
@@ -63,7 +66,7 @@ let package = Package(
         // System libraries
         .systemLibrary(name: "GLFW", path: "External/GLFW", pkgConfig: "glfw3"),
         .systemLibrary(name: "GL", path: "External/GL", pkgConfig: "gl"),
-        .systemLibrary(name: "Skia", path: "External/Skia", pkgConfig: "skia_loftwing"),
+        .systemLibrary(name: "Skia", path: "External/Skia", pkgConfig: debugSkia ? "skia_loftwing_debug" : "skia_loftwing"),
         // Test targets
         // TODO: Use Quick + Nimble once it has full async support
         // Not even XCTest has async support, what's the point?

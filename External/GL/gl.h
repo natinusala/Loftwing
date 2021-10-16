@@ -14,6 +14,6 @@
     limitations under the License.
 */
 
-module GL {
-    umbrella header "gl.h"
-}
+#define GL_GLEXT_PROTOTYPES
+#include <GL/gl.h>
+#include <GL/glext.h>

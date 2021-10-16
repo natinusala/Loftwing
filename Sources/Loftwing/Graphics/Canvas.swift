@@ -30,6 +30,14 @@ public protocol Canvas {
         height: Float,
         paint: Paint
     )
+
+    /// Draws the given image.
+    func drawImage(
+        _ image: Image,
+        x: Float,
+        y: Float,
+        paint: Paint?
+    )
 }
 
 @MainActor
@@ -57,6 +65,21 @@ public class SkiaCanvas: Canvas {
             self.native,
             &rect,
             paint.native
+        )
+    }
+
+    public     func drawImage(
+        _ image: Image,
+        x: Float,
+        y: Float,
+        paint: Paint?
+    ) {
+        sk_canvas_draw_image(
+            self.native,
+            image.native,
+            x,
+            y,
+            paint?.native ?? nil
         )
     }
 }

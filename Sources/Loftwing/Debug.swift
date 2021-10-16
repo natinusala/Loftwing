@@ -28,3 +28,6 @@ let debugAnimations = false
 
 /// Set to `true` to enable debug message of all tickings.
 let debugTickings = false || debugAnimations || debugEvents
+
+/// Set to `true` to enable debug messages of graphics rendering.
+let debugGraphics = true
