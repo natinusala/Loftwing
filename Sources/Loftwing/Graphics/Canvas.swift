@@ -30,7 +30,7 @@ public protocol Canvas {
 
     /// Draws the given image in its original size.
     func drawImage(
-        _ image: Image,
+        _ image: ImageSource,
         x: Float,
         y: Float,
         paint: Paint?
@@ -38,7 +38,7 @@ public protocol Canvas {
 
     /// Draws the given image and stretch it to fit the given rect.
     func drawImage(
-        _ image: Image,
+        _ image: ImageSource,
         x: Float,
         y: Float,
         paint: Paint?,
@@ -71,14 +71,14 @@ public class SkiaCanvas: Canvas {
     }
 
     public func drawImage(
-        _ image: Image,
+        _ image: ImageSource,
         x: Float,
         y: Float,
         paint: Paint?
     ) {
         sk_canvas_draw_image(
             self.native,
-            image.native,
+            image.skImage,
             x,
             y,
             paint?.native ?? nil
@@ -86,7 +86,7 @@ public class SkiaCanvas: Canvas {
     }
 
     public func drawImage(
-        _ image: Image,
+        _ image: ImageSource,
         x: Float,
         y: Float,
         paint: Paint?,
@@ -103,7 +103,7 @@ public class SkiaCanvas: Canvas {
 
         sk_canvas_draw_image_rect(
             self.native,
-            image.native,
+            image.skImage,
             &srcRect,
             &destRect,
             paint?.native ?? nil
