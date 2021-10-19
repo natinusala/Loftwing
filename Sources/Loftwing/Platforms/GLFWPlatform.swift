@@ -25,7 +25,7 @@ enum GLFWError: Error {
 }
 
 /// Set to `true` to enable sRGB color space.
-/// TODO: make it an app setting instead of an hardcoded flag
+/// TODO: make it an app setting instead of an hardcoded flag, move somewhere else (not GLFW specific)
 let enableSRGB = false
 
 /// GLFW as a platform, handling window and inputs.
