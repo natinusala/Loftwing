@@ -18,7 +18,7 @@
 // library at compile time. Please set them all to `false` before commiting.
 
 /// Set to `true` to enable debug messages of the layout engine.
-let debugLayout = false
+let debugLayout = true
 
 /// Set to `true` to enable debug message of events and tasks.
 let debugEvents = false
@@ -30,4 +30,4 @@ let debugAnimations = false
 let debugTickings = false || debugAnimations || debugEvents
 
 /// Set to `true` to enable debug messages of graphics rendering.
-let debugGraphics = true
+let debugGraphics = false

@@ -39,10 +39,8 @@ public protocol Canvas {
     /// Draws the given image and stretch it to fit the given rect.
     func drawImage(
         _ image: ImageSource,
-        x: Float,
-        y: Float,
-        paint: Paint?,
-        destRect: Rect
+        destRect: Rect,
+        paint: Paint?
     )
 }
 
@@ -87,10 +85,8 @@ public class SkiaCanvas: Canvas {
 
     public func drawImage(
         _ image: ImageSource,
-        x: Float,
-        y: Float,
-        paint: Paint?,
-        destRect: Rect
+        destRect: Rect,
+        paint: Paint?
     ) {
         var srcRect = sk_rect_t(
             left: 0,

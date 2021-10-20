@@ -39,10 +39,10 @@ open class Activity: FrameProtocol {
 
     /// Runs the activity for one frame.
     @MainActor
-    public func frame(canvas: Canvas) {
+    public func frame(canvas: Canvas) async {
         // Draw the mounted view.
         if let mountedView = self.mountedContent {
-            mountedView.frame(canvas: canvas)
+            await mountedView.frame(canvas: canvas)
         }
     }
 

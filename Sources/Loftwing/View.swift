@@ -26,10 +26,43 @@ public protocol BindableView {
     func bind(_ binding: ViewBinding<BindType>) -> BindType
 }
 
+/// Measuring mode passed to a view's measuring function.
+public enum ViewMeasureMode {
+    case undefined
+    case exactly
+    case atMost
+}
+
+extension YGMeasureMode {
+    /// Converts a Yoga measure mode to a Loftwing measure mode.
+    var viewMeasureMode: ViewMeasureMode {
+        // XXX: Find out why Swift only keeps raw values for Yoga enums
+        switch self.rawValue {
+            case 1:
+                return .undefined
+            case 2:
+                return .exactly
+            case 3:
+                return .atMost
+            default:
+                fatalError("Unknown YGMeasureMode")
+        }
+    }
+}
+
+/// Type of functions called to measure a view. Parameters are width, width measure mode,
+/// height and height measure mode. Should returns a width, height tuple.
+public typealias ViewMeasureFunc = @MainActor (Float, ViewMeasureMode, Float, ViewMeasureMode) -> (width: Float, height: Float)
+
 /// A view is the basic building block of an application's UI.
 /// The whole UI is made of a tree of views.
 open class View: FrameProtocol {
     let ygNode: YGNodeRef
+
+    /// The measure function to use for this view.
+    open var measureFunc: ViewMeasureFunc? {
+        nil
+    }
 
     var parent: View? = nil {
         willSet(newParent) {
@@ -54,9 +87,56 @@ open class View: FrameProtocol {
     /// Height of the view.
     private(set) var height: Float = 0
 
+    /// Returns a rect of the view's position and dimensions.
+    public var rect: Rect {
+        return Rect(
+            x: self.x,
+            y: self.y,
+            width: self.width,
+            height: self.height
+        )
+    }
+
+    /// Has onCreate been called yet?
+    private var created = false
+
+    @MainActor
+    public init() {
+        // Create node
+        self.ygNode = YGNodeNew()
+        YGNodeSetContext(self.ygNode, Unmanaged.passUnretained(self).toOpaque())
+
+        // Set the measure func if needed
+        // Called from C so cannot capture anything!
+        if self.measureFunc != nil {
+            Logger.debug(debugLayout, "Set measure func for \(self)")
+
+            YGNodeSetMeasureFunc(self.ygNode) { node, width, widthMode, height, heightMode in
+                let context = YGNodeGetContext(node)
+                let view = Unmanaged<View>.fromOpaque(context!).takeUnretainedValue()
+
+                Logger.debug(debugLayout, "Measure func of \(view) called")
+
+                if let measureFunc = view.measureFunc {
+                    let result = measureFunc(
+                        width,
+                        widthMode.viewMeasureMode,
+                        height,
+                        heightMode.viewMeasureMode
+                    )
+
+                    return YGSize(width: result.width, height: result.height)
+                }
+
+                fatalError("Measure function called on \(view) that does not have a measure function")
+            }
+        }
+    }
+
     /// Called by the parent view when their layout changes.
     /// Discards calculated layout properties so that they will be
     /// calculated again the next time we request them (usually next frame).
+    @MainActor
     open func onLayoutChanged(parentX: Float, parentY: Float) {
         self.x = parentX + YGNodeLayoutGetLeft(self.ygNode)
         self.y = parentY + YGNodeLayoutGetTop(self.ygNode)
@@ -71,10 +151,20 @@ open class View: FrameProtocol {
                 "width and height are (\(self.width), \(self.height))"
             )
         )
+
+        // Call the "lighter" onLayout() event
+        self.onLayout()
+    }
+
+    /// Called when the view position and dimensions changes.
+    @MainActor
+    open func onLayout() {
+        // Nothing to do
     }
 
     /// Called at the beginning of a frame when the view is dirty. Recalculates
     /// the layout and propagates the change through the whole tree if needed.
+    @MainActor
     open func layout() {
         // Don't layout if we have a parent, instead wait for our parent to layout
         if self.parent != nil {
@@ -92,15 +182,15 @@ open class View: FrameProtocol {
         self.onLayoutChanged(parentX: 0, parentY: 0)
     }
 
-    @MainActor
-    public init() {
-        self.ygNode = YGNodeNew()
-    }
-
     /// Called every frame. Do not override to draw your view's content, override
     /// `draw()` instead.
     @MainActor
-    open func frame(canvas: Canvas) {
+    open func frame(canvas: Canvas) async {
+        // Call onCreate if needed
+        if !self.created {
+            await self.onCreate()
+            self.created = true
+        }
         // Layout if needed
         if self.dirty {
             self.layout()
@@ -125,7 +215,10 @@ open class View: FrameProtocol {
     /// Invalidates the view, triggering a layout recalculation of the whole view tree
     /// starting from the top-most parent.
     func invalidateLayout() {
-        // TODO: mark the yoga node as dirty
+        // Mark the yoga node as dirty
+        if YGNodeHasMeasureFunc(self.ygNode) {
+            YGNodeMarkDirty(self.ygNode)
+        }
 
         // Invalidate every view of the tree, going upwards from this one
         // The point is that the top-most view will be laid out at next frame
@@ -191,6 +284,11 @@ open class View: FrameProtocol {
         YGNodeStyleSetFlexGrow(self.ygNode, factor.value)
         self.invalidateLayout()
         return self
+    }
+
+    /// Called when the view is created an about to be laid out.
+    open func onCreate() async {
+        // Nothing by default.
     }
 
     deinit {

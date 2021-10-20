@@ -17,9 +17,9 @@
 /// An observer is the combination of a callback and its owner.
 /// The observer only keeps a weak reference to the owner. This allows
 /// automatically unregistering the observer once the owner gets released.
-class Observer<CallbackParameter> {
-    typealias Callback = (CallbackParameter) async -> ()
-    typealias Owner = AnyObject
+public class Observer<CallbackParameter> {
+    public typealias Callback = (CallbackParameter) async -> ()
+    public typealias Owner = AnyObject
 
     let callback: Callback
     weak var owner: Owner?
@@ -42,24 +42,26 @@ class Observer<CallbackParameter> {
 /// When you want to fire the event (sending the signal to every observer and running
 /// their callback), call the fire(_ parameter:) method.
 /// TODO: rework CallbackParameter once Swift has variadic generic parameters
-class Event<CallbackParameter> {
-    typealias ObserverType = Observer<CallbackParameter>
+public class Event<CallbackParameter> {
+    public typealias ObserverType = Observer<CallbackParameter>
 
     var observers: [ObserverType] = []
+
+    public init() {}
 
     /// Fires the event, sending a signal to every observer. Their callback
     /// will be executed with the given parameters.
     /// Returns true if there is at least one observer for this event.
     @discardableResult
-    public func fire() async -> Bool where CallbackParameter == Void {
-        return await self.fire(with: ())
+    public func fire() -> Bool where CallbackParameter == Void {
+        return self.fire(with: ())
     }
 
     /// Fires the event, sending a signal to every observer. Their callback
     /// will be executed with the given parameters.
     /// Returns true if there is at least one observer for this event.
     @discardableResult
-    public func fire(with parameter: CallbackParameter) async -> Bool {
+    public func fire(with parameter: CallbackParameter) -> Bool {
         if self.observers.isEmpty {
             return false
         }
@@ -92,7 +94,7 @@ class Event<CallbackParameter> {
     /// released (we keep a weak reference to the owner to do so).
     public func observe(
         owner: ObserverType.Owner,
-        with callback: @escaping ObserverType.Callback) 
+        with callback: @escaping ObserverType.Callback)
     {
         self.observers.append(Observer(owner: owner, callback: callback))
     }
@@ -164,5 +166,42 @@ class EventTicking<CallbackParameter, Success, Failure>: Ticking where Failure: 
                 Logger.debug(debugEvents, "Event bound to task was deinited but task not handle not available yet")
             }
         }
+    }
+}
+
+/// Use this property wrapper to add a "value changed" event to anything.
+/// This is useful for reactive UI development.
+@propertyWrapper
+public class Observable<T> {
+    public typealias EventType = Event<T>
+
+    public var value: T {
+        didSet {
+            Logger.debug(debugEvents, "Observable \(self) value changed, firing event")
+            self.valueChangedEvent.fire(with: self.value)
+        }
+    }
+
+    let valueChangedEvent = EventType()
+
+    public init(wrappedValue: T) {
+        self.value = wrappedValue
+    }
+
+    public var wrappedValue: T {
+        get { return self.value }
+        set { self.value = newValue }
+    }
+
+    public var projectedValue: Observable<T> {
+        return self
+    }
+
+    /// Starts observing for changes of the wrapped value.
+    public func observe(
+        owner: EventType.ObserverType.Owner,
+        with callback: @escaping EventType.ObserverType.Callback
+    ) {
+        self.valueChangedEvent.observe(owner: owner, with: callback)
     }
 }

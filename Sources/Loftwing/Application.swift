@@ -155,7 +155,7 @@ open class InternalApplication: Context {
         }
 
         // Fire the creation event when everything is ready
-        await self.configuration.creationEvent.fire()
+        self.configuration.creationEvent.fire()
 
         // Main loop
         while(true) {
@@ -182,7 +182,7 @@ open class InternalApplication: Context {
             // Draw layers
             for layer in self.layers {
                 // TODO: saveLayer and restore?
-                layer.frame(canvas: self.window.canvas!)
+                await layer.frame(canvas: self.window.canvas!)
             }
 
             // Swap buffers
@@ -253,6 +253,7 @@ public class Runner {
     }
 
     /// Run every frame to run tickings and collect finished ones.
+    @MainActor
     func frame() {
         self.insideFrame = true
 
@@ -287,6 +288,7 @@ public class Runner {
 /// Can only be used on classes.
 public protocol Ticking: AnyObject {
     /// Method called every frame to run the ticking.
+    @MainActor
     func frame()
 
     /// Must return `true` if the ticking is finished and should be collected.

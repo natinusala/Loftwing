@@ -28,5 +28,5 @@ public protocol Layer: FrameProtocol {
 public protocol FrameProtocol {
     /// Runs for one frame.
     @MainActor
-    func frame(canvas: Canvas)
+    func frame(canvas: Canvas) async
 }

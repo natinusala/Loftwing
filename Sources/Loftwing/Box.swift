@@ -97,12 +97,12 @@ open class Box: View {
     }
 
     @MainActor
-    open override func frame(canvas: Canvas) {
-        super.frame(canvas: canvas)
+    open override func frame(canvas: Canvas) async {
+        await super.frame(canvas: canvas)
 
         // Run frame of every children
         for child in self.children {
-            child.frame(canvas: canvas)
+            await child.frame(canvas: canvas)
         }
     }
 

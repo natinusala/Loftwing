@@ -19,12 +19,12 @@ class ActivitiesStackLayer: Layer {
     var stack: ActivitiesStack = ActivitiesStack()
 
     @MainActor
-    func frame(canvas: Canvas) {
+    func frame(canvas: Canvas) async {
         // Draw all activities
         // TODO: do it better (see brls)
         for activity in self.stack {
             // TODO: saveLayer and restore?
-            activity.frame(canvas: canvas)
+            await activity.frame(canvas: canvas)
         }
     }
 
@@ -54,7 +54,7 @@ class ActivitiesStack: Sequence {
         activity.mountContent()
 
         // Fire creation event
-        await activity.creationEvent.fire()
+        activity.creationEvent.fire()
     }
 
     typealias Iterator = Array<Activity>.Iterator
