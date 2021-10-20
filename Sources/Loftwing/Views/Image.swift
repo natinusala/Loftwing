@@ -25,6 +25,8 @@ public enum ScalingMode {
     /// Image is centered inside the view but is not resized.
     case center
 
+    // TODO: integer scaling
+
     // TODO: crop
 }
 
@@ -94,10 +96,10 @@ public class Image: View, BindableView {
         { width, widthMode, height, heightMode in
             Logger.debug(debugLayout, "Image measure func called")
 
-            // If we don't want to resize the view, just return whatever Yoga
-            // gives us in the first place, it does not matter
+            // If we don't want to resize the view, just return undefined
+            // dimensions as it does not matter
             if !self.resizeView {
-                return (width, height)
+                return (nil, nil)
             } else {
                 fatalError("Unsupported image settings")
             }

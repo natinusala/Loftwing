@@ -52,7 +52,7 @@ extension YGMeasureMode {
 
 /// Type of functions called to measure a view. Parameters are width, width measure mode,
 /// height and height measure mode. Should returns a width, height tuple.
-public typealias ViewMeasureFunc = @MainActor (Float, ViewMeasureMode, Float, ViewMeasureMode) -> (width: Float, height: Float)
+public typealias ViewMeasureFunc = @MainActor (Float, ViewMeasureMode, Float, ViewMeasureMode) -> (width: Float?, height: Float?)
 
 /// A view is the basic building block of an application's UI.
 /// The whole UI is made of a tree of views.
@@ -125,7 +125,7 @@ open class View: FrameProtocol {
                         heightMode.viewMeasureMode
                     )
 
-                    return YGSize(width: result.width, height: result.height)
+                    return YGSize(width: result.width ?? YGUndefined, height: result.height ?? YGUndefined)
                 }
 
                 fatalError("Measure function called on \(view) that does not have a measure function")
