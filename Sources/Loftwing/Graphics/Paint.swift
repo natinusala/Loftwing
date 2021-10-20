@@ -16,9 +16,35 @@
 
 import Skia
 
+public enum FilteringQuality {
+    /// Nearest pixel.
+    case none
+
+    /// Bilinear filtering.
+    case low
+
+    /// Bilinear filtering with mipmaps for downscaling.
+    case medium
+
+    /// Bicubic filtering.
+    case high
+
+    var skiaFilterQuality: sk_filter_quality_t {
+        switch self {
+            case .none:
+                return NONE_SK_FILTER_QUALITY
+            case .low:
+                return LOW_SK_FILTER_QUALITY
+            case .medium:
+                return MEDIUM_SK_FILTER_QUALITY
+            case .high:
+                return HIGH_SK_FILTER_QUALITY
+        }
+    }
+}
+
 /// A paint represents the aspect and style of everything drawn onscreen. It can be
 /// an image, a color, it can have effects...
-@MainActor
 public class Paint {
     public let native: OpaquePointer
 
@@ -36,6 +62,11 @@ public class Paint {
     /// Sets the paint color.
     public func setColor(_ color: Color) {
         sk_paint_set_color(self.native, color.value)
+    }
+
+    /// Sets the filtering quality.
+    public func setFilteringQuality(_ quality: FilteringQuality) {
+        sk_paint_set_filter_quality(self.native, quality.skiaFilterQuality)
     }
 
     deinit {

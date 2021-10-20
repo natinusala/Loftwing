@@ -34,7 +34,23 @@ public enum ScalingMode {
     // TODO: crop
 }
 
-// TODO: sampling modes as well (linear / bilinear)
+/// Different image sampling modes.
+public enum SamplingMode {
+    case nearest
+    case bilinear
+    case bicubic
+
+    var filteringQuality: FilteringQuality {
+        switch self {
+            case .nearest:
+                return .none
+            case .bilinear:
+                return .medium
+            case .bicubic:
+                return .high
+        }
+    }
+}
 
 /// Allows displaying an `ImageSource` using different scaling and positioning methods.
 public class Image: View, BindableView {
@@ -50,9 +66,17 @@ public class Image: View, BindableView {
     /// Should the view dimensions be changed to fit the image?
     let resizeView: Bool
 
+    let paint = Paint()
+
     var scaling = ScalingMode.fit{
         didSet {
             self.invalidateLayout()
+        }
+    }
+
+    var sampling = SamplingMode.nearest {
+        didSet {
+            self.paint.setFilteringQuality(self.sampling.filteringQuality)
         }
     }
 
@@ -92,6 +116,14 @@ public class Image: View, BindableView {
     @discardableResult
     public func scalingMode(_ mode: ScalingMode) -> Self {
         self.scaling = mode
+        return self
+    }
+
+    /// Sets the sampling mode of the image inside the view.
+    /// Default is .nearest.
+    @discardableResult
+    public func samplingMode(_ mode: SamplingMode) -> Self {
+        self.sampling = mode
         return self
     }
 
@@ -211,7 +243,7 @@ public class Image: View, BindableView {
             canvas.drawImage(
                 source,
                 destRect: self.imageRect!,
-                paint: nil
+                paint: self.paint
             )
         }
     }
