@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+import Foundation
+
 /// Different image scaling modes.
 public enum ScalingMode {
     /// Image is stretched to fit the view dimensions. Aspect ratio is not preserved.
@@ -25,7 +27,9 @@ public enum ScalingMode {
     /// Image is centered inside the view but is not resized.
     case center
 
-    // TODO: integer scaling
+    /// Integer scaling. Can specify scaling factor, or use `nil` to scale up as much
+    /// as possible.
+    case integer(Int?)
 
     // TODO: crop
 }
@@ -156,6 +160,41 @@ public class Image: View, BindableView {
                         y: yPosition,
                         width: imageSource.width,
                         height: imageSource.height
+                    )
+                // Either multiply original image size, or compute the largest scale
+                // possible
+                case let .integer(factor):
+                    var width: Float = 0
+                    var height: Float = 0
+
+                    // Scale up
+                    if let factor = factor {
+                        if factor <= 0 {
+                            fatalError("Illegal value \(factor) for integer scaling")
+                        }
+
+                        width = imageSource.width * Float(factor)
+                        height = imageSource.height * Float(factor)
+                    } else {
+                        // Get max width
+                        let maxWidth = floor(self.width / imageSource.width)
+                        let maxHeight = floor(self.height / imageSource.height)
+
+                        let maxFactor = min(maxWidth, maxHeight)
+
+                        width = imageSource.width * Float(maxFactor)
+                        height = imageSource.height * Float(maxFactor)
+                    }
+
+                    // Center
+                    let xPosition = (self.width - width) / 2.0
+                    let yPosition = (self.height - height) / 2.0
+
+                    self.imageRect = Rect(
+                        x: xPosition,
+                        y: yPosition,
+                        width: width,
+                        height: height
                     )
             }
 
