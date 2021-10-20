@@ -28,6 +28,8 @@ public enum ScalingMode {
     // TODO: crop
 }
 
+// TODO: sampling modes as well (linear / bilinear)
+
 /// Allows displaying an `ImageSource` using different scaling and positioning methods.
 public class Image: View, BindableView {
     public var source: ImageSource? = nil {
