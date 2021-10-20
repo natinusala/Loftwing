@@ -44,7 +44,11 @@ public class Image: View, BindableView {
     /// Should the view dimensions be changed to fit the image?
     let resizeView: Bool
 
-    var scaling = ScalingMode.fit
+    var scaling = ScalingMode.fit{
+        didSet {
+            self.invalidateLayout()
+        }
+    }
 
     var blackPaint: Paint? = nil
 
@@ -82,7 +86,6 @@ public class Image: View, BindableView {
     @discardableResult
     public func scalingMode(_ mode: ScalingMode) -> Self {
         self.scaling = mode
-        self.invalidateLayout()
         return self
     }
 
