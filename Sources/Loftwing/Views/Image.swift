@@ -15,6 +15,7 @@
 */
 
 import Foundation
+import Skia
 
 /// Different image scaling modes.
 public enum ScalingMode {
@@ -100,7 +101,7 @@ public class Image: View, BindableView {
     /// Creates a new Image with given unowned source. If `resizeViewToFitImage` is set to `true`,
     /// the view bounds will be resized to fit the image as best as possible.
     @MainActor
-    public init<T>(unownedSource: Observable<T?>, resizeViewToFitImage: Bool = false) where T: ImageSource {
+    public init(unownedSource: Observable<ImageSource?>, resizeViewToFitImage: Bool = false) {
         self.resizeView = resizeViewToFitImage
         self.source = unownedSource.value
 

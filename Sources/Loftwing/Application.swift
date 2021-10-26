@@ -57,6 +57,13 @@ open class Application {
         nil
     }
 
+    /// Set to `true` to reset the graphics context before every frame.
+    /// Useful if you are using raw OpenGL calls in your application that can clash
+    /// with Loftwing rendering.
+    open var resetGraphicsContextOnFrame: Bool {
+        false
+    }
+
     /// Method called when the application is created and ready to run.
     open func onCreate() async {
         // Nothing by default
@@ -69,14 +76,15 @@ public protocol Context {
     var runner: Runner { get }
     var colorSpace: OpaquePointer? { get }
     var graphicsAPI: GraphicsAPI { get }
-    var skiaContext: OpaquePointer? { get }
+    var skContext: OpaquePointer? { get }
+    var window: Window { get }
 }
 
 /// Internal application singleton.
 open class InternalApplication: Context {
     let configuration: Application
 
-    var window: Window
+    public var window: Window
     var platform: Platform
 
     var shouldStop = false
@@ -90,7 +98,7 @@ open class InternalApplication: Context {
     public var runner = Runner()
     public var colorSpace: OpaquePointer?
     public var graphicsAPI: GraphicsAPI
-    public var skiaContext: OpaquePointer?
+    public var skContext: OpaquePointer?
 
     /// Creates an application.
     init(with configuration: Application) async throws {
@@ -100,7 +108,8 @@ open class InternalApplication: Context {
         self.platform = try await createPlatform(
             initialWindowMode: configuration.initialWindowMode,
             initialGraphicsAPI: try configuration.initialGraphicsAPI ?? GraphicsAPI.findFirstAvailable(),
-            initialTitle: configuration.title
+            initialTitle: configuration.title,
+            resetContext: configuration.resetGraphicsContextOnFrame
         )
 
         // Create window
@@ -132,7 +141,7 @@ open class InternalApplication: Context {
             try self.window.reload()
 
             //Refresh context
-            self.skiaContext = window.skiaContext
+            self.skContext = window.skContext
             self.colorSpace = window.colorSpace
 
             // Ensure the window has a Skia canvas
