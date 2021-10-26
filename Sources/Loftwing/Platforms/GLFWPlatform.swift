@@ -39,7 +39,8 @@ class GLFWPlatform: Platform {
     required init(
         initialWindowMode windowMode: WindowMode,
         initialGraphicsAPI graphicsAPI: GraphicsAPI,
-        initialTitle title: String
+        initialTitle title: String,
+        resetContext: Bool
     ) async throws {
         // Set error callback
         glfwSetErrorCallback {code, error in
@@ -60,7 +61,8 @@ class GLFWPlatform: Platform {
         self.glfwWindow = try await GLFWWindow(
             initialWindowMode: windowMode,
             initialGraphicsAPI: graphicsAPI,
-            initialTitle: title
+            initialTitle: title,
+            resetContext: resetContext
         )
     }
 
@@ -80,24 +82,29 @@ class GLFWWindow: Window {
     var window: OpaquePointer? = nil // GLFW window
 
     var canvas: Canvas? = nil // Skia canvas
-    var skiaContext: OpaquePointer? = nil // Skia context
+    var skContext: OpaquePointer? = nil // Skia context
     var colorSpace: OpaquePointer? = nil
 
     var width: Float = 0
     var height: Float = 0
 
+    let resetContext: Bool
+
     init(
         initialWindowMode windowMode: WindowMode,
         initialGraphicsAPI graphicsAPI: GraphicsAPI,
-        initialTitle title: String
+        initialTitle title: String,
+        resetContext: Bool
     ) throws {
         self.windowMode = windowMode
         self.graphicsAPI = graphicsAPI
         self.title = title
+        self.resetContext = resetContext
     }
 
     func swapBuffers() {
-        gr_direct_context_flush(self.skiaContext)
+        gr_direct_context_reset_context(self.skContext, kAll_GrBackendState)
+        gr_direct_context_flush(self.skContext)
         glfwSwapBuffers(self.window)
     }
 
@@ -203,7 +210,7 @@ class GLFWWindow: Window {
         switch self.graphicsAPI {
             case .gl:
                 let interface = gr_glinterface_create_native_interface()
-                self.skiaContext = gr_direct_context_make_gl(interface)
+                self.skContext = gr_direct_context_make_gl(interface)
 
                 var framebufferInfo = gr_gl_framebufferinfo_t(
                     fFBOID: 0,
@@ -219,7 +226,7 @@ class GLFWWindow: Window {
                 )
         }
 
-        guard let context = self.skiaContext else {
+        guard let context = self.skContext else {
             throw SkiaError.cannotInitSkiaContext
         }
 
@@ -245,6 +252,18 @@ class GLFWWindow: Window {
 
         Logger.info("Created \(self.graphicsAPI) Skia context")
 
+        switch self.graphicsAPI {
+            case .gl:
+                var majorVersion: GLint = 0
+                var minorVersion: GLint = 0
+                glGetIntegerv(GLenum(GL_MAJOR_VERSION), &majorVersion)
+                glGetIntegerv(GLenum(GL_MINOR_VERSION), &minorVersion)
+
+                // TODO: handle case where GL_MINOR_VERSION is not available and use glGetString(GL_VERSION) (how can I tell?)
+
+                Logger.info("OpenGL version: \(majorVersion).\(minorVersion)")
+        }
+
         // Finalize init
         glfwSwapInterval(1)
 
@@ -259,5 +278,24 @@ class GLFWWindow: Window {
 
     func shouldClose() -> Bool {
         return glfwWindowShouldClose(self.window) == 1
+    }
+
+    func makeContextCurrent() {
+        glfwMakeContextCurrent(self.window)
+    }
+
+    func makeOffscreenContext() -> OpaquePointer? {
+        // This is apparently how you have an off-screen context using GLFW,
+        // you just create an invisible window.
+
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE)
+        let ctx = glfwCreateWindow(640, 480, "", nil, self.window)
+        glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE)
+
+        return ctx
+    }
+
+    func makeOffscreenContextCurrent(_ ctx: OpaquePointer?) {
+        glfwMakeContextCurrent(ctx)
     }
 }

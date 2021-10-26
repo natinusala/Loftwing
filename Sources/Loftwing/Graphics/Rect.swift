@@ -20,26 +20,26 @@ import Skia
 public struct Rect {
     public var x: Float {
         didSet {
-            self.updateSkiaRect()
+            self.updateSkRect()
         }
     }
     public var y: Float {
         didSet {
-            self.updateSkiaRect()
+            self.updateSkRect()
         }
     }
     public var width: Float {
         didSet {
-            self.updateSkiaRect()
+            self.updateSkRect()
         }
     }
     public var height: Float {
         didSet {
-            self.updateSkiaRect()
+            self.updateSkRect()
         }
     }
 
-    public internal(set) var skiaRect: sk_rect_t
+    public internal(set) var skRect: sk_rect_t
 
     public init(x: Float, y: Float, width: Float, height: Float) {
         self.x = x
@@ -47,10 +47,10 @@ public struct Rect {
         self.width = width
         self.height = height
 
-        self.skiaRect = sk_rect_t(left: x, top: y, right: x + width, bottom: y + height)
+        self.skRect = sk_rect_t(left: x, top: y, right: x + width, bottom: y + height)
     }
 
-    mutating func updateSkiaRect() {
-        self.skiaRect = sk_rect_t(left: x, top: y, right: x + width, bottom: y + height)
+    mutating func updateSkRect() {
+        self.skRect = sk_rect_t(left: x, top: y, right: x + width, bottom: y + height)
     }
 }

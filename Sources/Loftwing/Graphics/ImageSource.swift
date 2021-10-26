@@ -25,6 +25,24 @@ public protocol ImageSource {
 
     var width: Float { get }
     var height: Float { get }
+
+    /// Area to draw inside the source.
+    var drawRect: Rect { get }
+}
+
+/// Origin position for GPU textures.
+public enum Origin {
+    case topLeft
+    case bottomLeft
+
+    var skOrigin: gr_surfaceorigin_t {
+        switch self {
+            case .topLeft:
+                return TOP_LEFT_GR_SURFACE_ORIGIN
+            case .bottomLeft:
+                return BOTTOM_LEFT_GR_SURFACE_ORIGIN
+        }
+    }
 }
 
 /// An image source backed by a GPU texture with fixed width, height and pixel format.
@@ -34,23 +52,38 @@ public class GPUTexture: ImageSource {
     public var skImage: OpaquePointer? = nil
 
     public var skiaTexture: OpaquePointer? = nil
-    public var texture: UInt32 = 0 // TODO: make this graphics-api agnostic somehow
+    public var texture: UInt32 = 0
 
     public let width: Float
     public let height: Float
 
     let pixelFormat: PixelFormat
 
+    public let drawRect: Rect
+
     /// Creates a new GPU texture with no width or height.
-    public init(width: Float, height: Float, pixelFormat: PixelFormat) throws {
+    public init(
+        width: Float,
+        height: Float,
+        pixelFormat: PixelFormat,
+        origin: Origin = .topLeft,
+        drawRect: Rect? = nil
+    ) throws {
         self.pixelFormat = pixelFormat
-        self.width = width
-        self.height = height
+
+        self.drawRect = drawRect ?? Rect(x: 0, y: 0, width: width, height: height)
+
+        // In the case of a GPU texture, the width and height of the Skia image
+        // should be the same as the input rect
+        self.width = self.drawRect.width
+        self.height = self.drawRect.height
 
         // Create the texture and Skia image
+        // Be careful to give the actual requested dimensions and not
+        // the dimensions of the Skia image (self.drawRect)
         switch (getContext().graphicsAPI) {
             case .gl:
-                try self.createGl()
+                try self.createGl(width: width, height: height)
         }
 
         if self.skiaTexture == nil {
@@ -61,7 +94,7 @@ public class GPUTexture: ImageSource {
             throw GPUTextureError.invalidTexture
         }
 
-        guard let context = getContext().skiaContext else {
+        guard let context = getContext().skContext else {
             throw GPUTextureError.invalidContext
         }
 
@@ -69,7 +102,7 @@ public class GPUTexture: ImageSource {
         self.skImage = sk_image_new_from_texture(
             context,
             self.skiaTexture,
-            TOP_LEFT_GR_SURFACE_ORIGIN,
+            origin.skOrigin,
             self.pixelFormat.skiaColorType,
             OPAQUE_SK_ALPHATYPE, // TODO: handle alpha somehow
             getContext().colorSpace,
@@ -84,7 +117,10 @@ public class GPUTexture: ImageSource {
         Logger.debug(debugGraphics, "Created a new \(pixelFormat) texture of \(width)x\(height)")
     }
 
-    private func createGl() throws {
+    private func createGl(
+        width: Float,
+        height: Float
+    ) throws {
         // Generate a new GL texture
         glGenTextures(1, &self.texture)
         glBindTexture(GLenum(GL_TEXTURE_2D), self.texture)
@@ -121,17 +157,20 @@ public class GPUTexture: ImageSource {
 /// Different GPU textures pixel formats.
 public enum PixelFormat {
     case rgb565
+    case rgba8888
 
     var glInternalFormat: GLenum {
         switch self {
             case .rgb565:
                 return GLenum(GL_RGB565)
+            case .rgba8888:
+                return GLenum(GL_RGBA8)
         }
     }
 
     var glFormat: GLenum {
         switch self {
-            case .rgb565:
+            case .rgb565, .rgba8888:
                 return GLenum(GL_RGB)
         }
     }
@@ -140,6 +179,8 @@ public enum PixelFormat {
         switch self {
             case .rgb565:
                 return GLenum(GL_UNSIGNED_SHORT_5_6_5)
+            case .rgba8888:
+                return GLenum(GL_UNSIGNED_BYTE)
         }
     }
 
@@ -147,6 +188,8 @@ public enum PixelFormat {
         switch self {
             case .rgb565:
                 return RGB_565_SK_COLORTYPE
+            case .rgba8888:
+                return RGBA_8888_SK_COLORTYPE
         }
     }
 }

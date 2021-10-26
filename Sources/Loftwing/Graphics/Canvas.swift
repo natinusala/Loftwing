@@ -60,7 +60,7 @@ public class SkiaCanvas: Canvas {
         _ rect: Rect,
         paint: Paint
     ) {
-        var skiaRect = rect.skiaRect
+        var skiaRect = rect.skRect
         sk_canvas_draw_rect(
             self.native,
             &skiaRect,
@@ -88,14 +88,8 @@ public class SkiaCanvas: Canvas {
         destRect: Rect,
         paint: Paint?
     ) {
-        var srcRect = sk_rect_t(
-            left: 0,
-            top: 0,
-            right: image.width,
-            bottom: image.height
-        )
-
-        var destRect = destRect.skiaRect
+        var srcRect = image.drawRect.skRect
+        var destRect = destRect.skRect
 
         sk_canvas_draw_image_rect(
             self.native,

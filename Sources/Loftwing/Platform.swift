@@ -26,13 +26,15 @@ public enum SkiaError: Error {
 func createPlatform(
     initialWindowMode windowMode: WindowMode,
     initialGraphicsAPI graphicsAPI: GraphicsAPI,
-    initialTitle title: String
+    initialTitle title: String,
+    resetContext: Bool
 ) async throws -> Platform {
     // TODO: only return GLFW if it's actually supported
     return try await GLFWPlatform(
         initialWindowMode: windowMode,
         initialGraphicsAPI: graphicsAPI,
-        initialTitle: title
+        initialTitle: title,
+        resetContext: resetContext
     )
 }
 
@@ -44,7 +46,8 @@ protocol Platform {
     init(
         initialWindowMode windowMode: WindowMode,
         initialGraphicsAPI graphicsAPI: GraphicsAPI,
-        initialTitle: String
+        initialTitle: String,
+        resetContext: Bool
     ) async throws
 
     /// Current window handle.
@@ -86,7 +89,7 @@ public enum GraphicsAPI {
 
 /// Represents an application window.
 @MainActor
-protocol Window {
+public protocol Window {
     /// Graphics canvas.
     var canvas: Canvas? { get }
 
@@ -112,5 +115,14 @@ protocol Window {
     var graphicsAPI: GraphicsAPI { get }
 
     /// Skia context.
-    var skiaContext: OpaquePointer? { get }
+    var skContext: OpaquePointer? { get }
+
+    /// Makes the window context current.
+    func makeContextCurrent()
+
+    /// Creates a new offscreen graphics API context.
+    func makeOffscreenContext() -> OpaquePointer?
+
+    /// Makes an offscreen context current.
+    func makeOffscreenContextCurrent(_ ctx: OpaquePointer?)
 }
