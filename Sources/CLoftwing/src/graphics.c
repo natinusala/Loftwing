@@ -14,6 +14,9 @@
     limitations under the License.
 */
 
-module GL {
-    umbrella header "gl.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+void gladLoadGLLoaderFromGLFW() {
+    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 }

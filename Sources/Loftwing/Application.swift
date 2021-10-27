@@ -314,6 +314,6 @@ extension Application {
     /// Main entry point of an application. Use the `@main` attribute to
     /// use it in your executable target. Calling it manually is not supported.
     public static func main() async throws {
-        try await InternalApplication(with: self.init()).main()
+        try await InternalApplication(with: await self.init()).main()
     }
 }

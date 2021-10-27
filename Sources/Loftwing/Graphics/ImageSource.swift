@@ -15,7 +15,7 @@
 */
 
 import Skia
-import GL
+import Glad
 
 /// Represents a source for an image.
 @MainActor
