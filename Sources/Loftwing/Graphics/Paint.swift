@@ -45,6 +45,7 @@ public enum FilteringQuality {
 
 /// A paint represents the aspect and style of everything drawn onscreen. It can be
 /// an image, a color, it can have effects...
+@MainActor
 public class Paint {
     public let native: OpaquePointer
 

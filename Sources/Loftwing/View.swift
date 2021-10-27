@@ -97,9 +97,6 @@ open class View: FrameProtocol {
         )
     }
 
-    /// Has onCreate been called yet?
-    private var created = false
-
     @MainActor
     public init() {
         // Create node
@@ -186,11 +183,6 @@ open class View: FrameProtocol {
     /// `draw()` instead.
     @MainActor
     open func frame(canvas: Canvas) async {
-        // Call onCreate if needed
-        if !self.created {
-            await self.onCreate()
-            self.created = true
-        }
         // Layout if needed
         if self.dirty {
             self.layout()
@@ -284,11 +276,6 @@ open class View: FrameProtocol {
         YGNodeStyleSetFlexGrow(self.ygNode, factor.value)
         self.invalidateLayout()
         return self
-    }
-
-    /// Called when the view is created an about to be laid out.
-    open func onCreate() async {
-        // Nothing by default.
     }
 
     deinit {
