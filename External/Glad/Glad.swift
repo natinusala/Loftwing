@@ -39,3 +39,4 @@ public let glRenderbufferStorage = glad_glRenderbufferStorage!
 public let glFramebufferRenderbuffer = glad_glFramebufferRenderbuffer!
 public let glCheckFramebufferStatus = glad_glCheckFramebufferStatus!
 public let glClear = glad_glClear!
+public let glDebugMessageCallback = glad_glDebugMessageCallback!

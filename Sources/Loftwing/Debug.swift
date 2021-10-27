@@ -32,4 +32,5 @@ let debugTickings = false || debugAnimations || debugEvents
 /// Set to `true` to enable debug messages of graphics rendering.
 let debugGraphics = false
 
-// TODO: add a debugRenderer flag that uses glDebugMessageCallback
+/// Sets to `true` to enable error messages of graphics API.
+let debugRenderer = false

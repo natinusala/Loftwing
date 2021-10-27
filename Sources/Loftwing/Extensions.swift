@@ -22,3 +22,21 @@ public extension Array where Element: Equatable {
         }
     }
 }
+
+public extension UnsafePointer where Pointee == CChar {
+    /// Converts an unsafe char* pointer to a Swift string.
+    var str: String {
+        return String(cString: self)
+    }
+}
+
+public extension Optional where Wrapped == UnsafePointer<CChar> {
+    /// Converts an optional unsafe char* pointer to a Swift string.
+    var str: String? {
+        if let cStr = self {
+            return String(cString: cStr)
+        }
+
+        return nil
+    }
+}

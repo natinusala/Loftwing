@@ -105,7 +105,10 @@ class GLFWWindow: Window {
     }
 
     func swapBuffers() {
-        gr_direct_context_reset_context(self.skContext, kAll_GrBackendState)
+        if self.resetContext {
+            gr_direct_context_reset_context(self.skContext, kAll_GrBackendState)
+        }
+
         gr_direct_context_flush(self.skContext)
         glfwSwapBuffers(self.window)
     }
@@ -194,6 +197,15 @@ class GLFWWindow: Window {
         switch self.graphicsAPI {
             case .gl:
                 gladLoadGLLoaderFromGLFW()
+                    if debugRenderer {
+                        glEnable(GLenum(GL_DEBUG_OUTPUT))
+                        glDebugMessageCallback(
+                            { source, type, id, severity, length, message, _ in
+                                Logger.debug(debugRenderer, "OpenGL \(severity) \(id): \(message.str ?? "unspecified")")
+                            },
+                            nil
+                        )
+                    }
         }
 
         // Enable sRGB if requested
