@@ -40,11 +40,19 @@ let package = Package(
         .target(
             name: "Loftwing",
             dependencies: [
+                "CLoftwing",
                 "Yoga",
                 "GLFW",
-                "GL",
+                "Glad",
                 "Skia",
                 "Rainbow"
+            ]
+        ),
+        .target(
+            name: "CLoftwing",
+            dependencies: [
+                "GLFW",
+                "Glad"
             ]
         ),
         .target(
@@ -63,9 +71,17 @@ let package = Package(
             dependencies: ["CYoga"],
             path: "External/Yoga"
         ),
+        .target(
+            name: "CGlad",
+            path: "External/CGlad"
+        ),
+        .target(
+            name: "Glad",
+            dependencies: ["CGlad"],
+            path: "External/Glad"
+        ),
         // System libraries
         .systemLibrary(name: "GLFW", path: "External/GLFW", pkgConfig: "glfw3"),
-        .systemLibrary(name: "GL", path: "External/GL", pkgConfig: "gl"),
         .systemLibrary(name: "Skia", path: "External/Skia", pkgConfig: debugSkia ? "skia_loftwing_debug" : "skia_loftwing"),
         // Test targets
         // TODO: Use Quick + Nimble once it has full async support

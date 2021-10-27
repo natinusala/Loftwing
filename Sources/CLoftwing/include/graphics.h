@@ -14,6 +14,5 @@
     limitations under the License.
 */
 
-#define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
-#include <GL/glext.h>
+/// Sets glad loader to glfw.
+void gladLoadGLLoaderFromGLFW();

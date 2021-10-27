@@ -14,4 +14,5 @@
     limitations under the License.
 */
 
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
