@@ -93,7 +93,7 @@ open class InternalApplication: Context {
     let activitiesStackLayer = ActivitiesStackLayer()
     var layers: [Layer] = []
 
-    let clearPaint = Paint(color: Color.black)
+    let clearPaint: Paint
 
     public var runner = Runner()
     public var colorSpace: OpaquePointer?
@@ -103,6 +103,7 @@ open class InternalApplication: Context {
     /// Creates an application.
     init(with configuration: Application) async throws {
         self.configuration = configuration
+        self.clearPaint = await Paint(color: Color.black)
 
         // Initialize platform
         self.platform = try await createPlatform(

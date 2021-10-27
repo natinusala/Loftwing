@@ -67,7 +67,7 @@ public class Image: View, BindableView {
     /// Should the view dimensions be changed to fit the image?
     let resizeView: Bool
 
-    let paint = Paint()
+    let paint: Paint
 
     var scaling = ScalingMode.fit{
         didSet {
@@ -75,6 +75,7 @@ public class Image: View, BindableView {
         }
     }
 
+    @MainActor
     var sampling = SamplingMode.nearest {
         didSet {
             self.paint.setFilteringQuality(self.sampling.filteringQuality)
@@ -96,6 +97,7 @@ public class Image: View, BindableView {
     public init(source: ImageSource?, resizeViewToFitImage: Bool = false) {
         self.resizeView = resizeViewToFitImage
         self.source = source
+        self.paint = Paint()
     }
 
     /// Creates a new Image with given unowned source. If `resizeViewToFitImage` is set to `true`,
@@ -104,6 +106,7 @@ public class Image: View, BindableView {
     public init(unownedSource: Observable<ImageSource?>, resizeViewToFitImage: Bool = false) {
         self.resizeView = resizeViewToFitImage
         self.source = unownedSource.value
+        self.paint = Paint()
 
         super.init()
 
@@ -122,6 +125,7 @@ public class Image: View, BindableView {
 
     /// Sets the sampling mode of the image inside the view.
     /// Default is .nearest.
+    @MainActor
     @discardableResult
     public func samplingMode(_ mode: SamplingMode) -> Self {
         self.sampling = mode
