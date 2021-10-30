@@ -134,26 +134,17 @@ open class InternalApplication: Context {
 
         // Register ourself as the running context
         contextSharedInstance = self
-    }
 
-    /// Runs the application until closed, either by the user
-    /// or through exit().
-    public func main() throws {
         // Load window
-        do {
-            try self.window.reload()
+        try self.window.reload()
 
-            //Refresh context
-            self.skContext = window.skContext
-            self.colorSpace = window.colorSpace
+        //Refresh context
+        self.skContext = window.skContext
+        self.colorSpace = window.colorSpace
 
-            // Ensure the window has a Skia canvas
-            if self.window.canvas == nil {
-                throw WindowCreationError.noSkiaCanvas
-            }
-        } catch {
-            Logger.error("Could not create window: \(error)")
-            throw error
+        // Ensure the window has a Skia canvas
+        if self.window.canvas == nil {
+            throw WindowCreationError.noSkiaCanvas
         }
 
         // Push main activity
@@ -166,24 +157,9 @@ open class InternalApplication: Context {
 
         // Fire the creation event when everything is ready
         self.configuration.creationEvent.fire()
-
-        // Main loop
-        let mainQueue = DispatchQueue.main
-
-        let timer = DispatchSource.makeTimerSource(queue: mainQueue)
-        timer.scheduleRepeating(deadline: .now(), interval: .nanoseconds(20000000), leeway: .nanoseconds(0)) // TODO: remove hardcoded 20000000
-        timer.setEventHandler {
-            self.frame()
-        }
-
-        timer.activate()
-
-        // This will run indefinitely until exit() is called, draining
-        // everything in the main queue
-        dispatchMain()
     }
 
-    /// Executed every frame
+    /// Executed every frame.
     func frame() {
         // Poll platform, see if we should exit
         // TODO: handle ctrlc to gracefully exit
@@ -308,7 +284,28 @@ public func getContext() -> Context {
 extension Application {
     /// Main entry point of an application. Use the `@main` attribute to
     /// use it in your executable target. Calling it manually is not supported.
-    public static func main() throws {
-        try InternalApplication(with: self.init()).main()
+    public static func main() {
+        let queue = DispatchQueue.main
+
+        // Setup main loop timer
+        let timer = DispatchSource.makeTimerSource(queue: queue)
+        timer.scheduleRepeating(deadline: .now(), interval: .nanoseconds(20000000), leeway: .nanoseconds(0)) // TODO: remove hardcoded 20000000
+
+        // Since the DispatchQueue main thread and our own main thread may not be the same
+        // we need to run the whole app init on the main queue.
+        queue.async {
+            // Init app
+            let app = try! InternalApplication(with: self.init())
+
+            // Activate main loop timer
+            timer.setEventHandler {
+                app.frame()
+            }
+            timer.activate()
+        }
+
+        // This will run indefinitely until exit() is called, draining
+        // everything in the main queue
+        dispatchMain()
     }
 }

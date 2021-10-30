@@ -15,8 +15,8 @@
 #define COMPILING_WITH_CLANG_ON_WINDOWS
 #endif
 #if defined(COMPILING_WITH_CLANG_ON_WINDOWS)
-#include <limits>
-constexpr float YGUndefined = std::numeric_limits<float>::quiet_NaN();
+YG_EXTERN_C_BEGIN
+#define YGUndefined NAN
 #else
 YG_EXTERN_C_BEGIN
 

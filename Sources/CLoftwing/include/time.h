@@ -1,5 +1,6 @@
 /*
     Copyright 2021 natinusala
+    Copyright 2010-2020 The RetroArch team
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -14,7 +15,10 @@
     limitations under the License.
 */
 
-module GLFW {
-    umbrella header "glfw.h"
-    link "glfw3"
-}
+
+#include <stdint.h>
+
+typedef int64_t Time;
+
+/// Returns current time in microseconds.
+Time getTimeUsec(void);

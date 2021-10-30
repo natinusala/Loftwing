@@ -63,8 +63,7 @@ let package = Package(
         .target(
             name: "CYoga",
             path: "External/CYoga",
-            exclude: ["LICENSE"],
-            linkerSettings: [.linkedLibrary("m")]
+            exclude: ["LICENSE"]
         ),
         .target(
             name: "Yoga",

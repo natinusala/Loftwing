@@ -196,15 +196,16 @@ class GLFWWindow: Window {
         switch self.graphicsAPI {
             case .gl:
                 gladLoadGLLoaderFromGLFW()
-                    if debugRenderer {
-                        glEnable(GLenum(GL_DEBUG_OUTPUT))
-                        glDebugMessageCallback(
-                            { source, type, id, severity, length, message, _ in
-                                Logger.debug(debugRenderer, "OpenGL \(severity) \(id): \(message.str ?? "unspecified")")
-                            },
-                            nil
-                        )
-                    }
+
+                if debugRenderer {
+                    glEnable(GLenum(GL_DEBUG_OUTPUT))
+                    glDebugMessageCallback(
+                        { source, type, id, severity, length, message, _ in
+                            Logger.debug(debugRenderer, "OpenGL \(severity) \(id): \(message.str ?? "unspecified")")
+                        },
+                        nil
+                    )
+                }
         }
 
         // Enable sRGB if requested
