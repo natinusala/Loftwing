@@ -20,6 +20,13 @@ import PackageDescription
 /// Should we link against the debug Skia build?
 let debugSkia = false
 
+// Platform specific changes
+#if os(Windows)
+    let yogaLinkerSettings: [LinkerSetting] = []
+#else
+    let yogaLinkerSettings: [LinkerSetting] = [LinkerSetting.linkedLibrary("m")]
+#endif
+
 let package = Package(
     name: "Loftwing",
     products: [
@@ -40,12 +47,17 @@ let package = Package(
         .target(
             name: "Loftwing",
             dependencies: [
+                "CLoftwing",
                 "Yoga",
                 "GLFW",
-                "GL",
+                "Glad",
                 "Skia",
                 "Rainbow"
             ]
+        ),
+        .target(
+            name: "CLoftwing",
+            dependencies: ["GLFW", "CGlad"]
         ),
         .target(
             name: "LoftwingExample",
@@ -56,16 +68,24 @@ let package = Package(
             name: "CYoga",
             path: "External/CYoga",
             exclude: ["LICENSE"],
-            linkerSettings: [.linkedLibrary("m")]
+            linkerSettings: yogaLinkerSettings
         ),
         .target(
             name: "Yoga",
             dependencies: ["CYoga"],
             path: "External/Yoga"
         ),
+        .target(
+            name: "Glad",
+            dependencies: ["CGlad"],
+            path: "External/Glad"
+        ),
+        .target(
+            name: "CGlad",
+            path: "External/CGlad"
+        ),
         // System libraries
         .systemLibrary(name: "GLFW", path: "External/GLFW", pkgConfig: "glfw3"),
-        .systemLibrary(name: "GL", path: "External/GL", pkgConfig: "gl"),
         .systemLibrary(name: "Skia", path: "External/Skia", pkgConfig: debugSkia ? "skia_loftwing_debug" : "skia_loftwing"),
         // Test targets
         // TODO: Use Quick + Nimble once it has full async support

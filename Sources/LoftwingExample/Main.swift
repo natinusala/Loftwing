@@ -19,6 +19,11 @@ import Loftwing
 // Declare a Loftwing application.
 @main
 class ExampleApplication: Application {
+    // XXX: This is required for the Swift compiler not to crash on Windows, reproduce it and fill a Swift bug report?
+    required init() async {
+        await super.init()
+    }
+
     // Application title
     override var title: String {
         "Loftwing Example Application"

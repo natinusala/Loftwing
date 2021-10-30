@@ -14,6 +14,16 @@
     limitations under the License.
 */
 
-module GL {
-    umbrella header "gl.h"
-}
+@_exported import CGlad
+
+// Glad header uses defines to translate glad_ symbols, however Swift C interop
+// ignores defines so we need to do the translation here.
+// gladLoaderLoadGL() needs to be called before using those.
+
+public let glBindTexture = glad_glBindTexture!
+public let glPixelStorei = glad_glPixelStorei!
+public let glBindBuffer = glad_glBindBuffer!
+public let glTexSubImage2D = glad_glTexSubImage2D!
+public let glGenTextures = glad_glGenTextures!
+public let glTexStorage2D = glad_glTexStorage2D!
+public let glEnable = glad_glEnable!

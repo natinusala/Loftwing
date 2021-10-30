@@ -14,7 +14,10 @@
     limitations under the License.
 */
 
-module GLFW {
-    umbrella header "glfw.h"
-    link "glfw3" // TODO: find out why that's necessary, it should be added from pkg-config already
+#include <glad/glad.h>
+#define GLFW_INCLUDE_GLEXT
+#include <GLFW/glfw3.h>
+
+void loadGL() {
+    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 }

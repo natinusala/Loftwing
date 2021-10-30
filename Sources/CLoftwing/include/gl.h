@@ -14,6 +14,6 @@
     limitations under the License.
 */
 
-#define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
-#include <GL/glext.h>
+/// Loads OpenGL functions using glad and GLFW.
+/// Made a C function for convenience.
+void loadGL();

@@ -14,4 +14,6 @@
     limitations under the License.
 */
 
+#include <glad/glad.h>
+#define GLFW_INCLUDE_GLEXT
 #include <GLFW/glfw3.h>

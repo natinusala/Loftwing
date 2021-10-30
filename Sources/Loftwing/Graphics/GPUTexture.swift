@@ -15,7 +15,7 @@
 */
 
 import Skia
-import GL
+import Glad
 
 public enum GPUTextureError: Error {
     case unableToCreateTexture

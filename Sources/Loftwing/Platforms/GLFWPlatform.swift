@@ -14,14 +14,18 @@
     limitations under the License.
 */
 
+import Glad
 import GLFW
 import Skia
+
+import CLoftwing
 
 enum GLFWError: Error {
     case initFailed
     case noPrimaryMonitor
     case noVideoMode
     case cannotCreateWindow
+    case cannotLoadGL
 }
 
 /// Set to `true` to enable sRGB color space.
@@ -41,6 +45,8 @@ class GLFWPlatform: Platform {
         initialGraphicsAPI graphicsAPI: GraphicsAPI,
         initialTitle title: String
     ) async throws {
+        Logger.debug(debugLifecycle, "Entered GLFWPlatform init()")
+
         // Set error callback
         glfwSetErrorCallback {code, error in
             if let errorString = error {
@@ -62,6 +68,8 @@ class GLFWPlatform: Platform {
             initialGraphicsAPI: graphicsAPI,
             initialTitle: title
         )
+
+        Logger.debug(debugLifecycle, "Exited GLFWPlatform init()")
     }
 
     func poll() async -> Bool {
@@ -181,6 +189,12 @@ class GLFWWindow: Window {
 
         // Initialize graphics API
         glfwMakeContextCurrent(window)
+
+        // Load graphics API functions
+        switch self.graphicsAPI {
+            case .gl:
+                loadGL() // TODO: put a log with OpenGL version and all
+        }
 
         // Enable sRGB if requested
         if enableSRGB {

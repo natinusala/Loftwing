@@ -96,6 +96,10 @@ class Event<CallbackParameter> {
     {
         self.observers.append(Observer(owner: owner, callback: callback))
     }
+
+    deinit {
+        Logger.debug(debugEvents, "Event deinited")
+    }
 }
 
 /// A ticking related to an event, created when the event is fired.
@@ -137,7 +141,7 @@ class EventTicking<CallbackParameter, Success, Failure>: Ticking where Failure: 
             let result = await operation()
 
             // Set state to finished
-            Logger.debug(debugEvents, "Event ticking marked as finished")
+            Logger.debug(debugEvents, "Task finished, event ticking marked as finished")
             self.finished = true
 
             return result
@@ -161,8 +165,12 @@ class EventTicking<CallbackParameter, Success, Failure>: Ticking where Failure: 
                 task.cancel()
                 self.finished = true
             } else {
-                Logger.debug(debugEvents, "Event bound to task was deinited but task not handle not available yet")
+                Logger.debug(debugEvents, "Event bound to task was deinited but task handle is not available yet")
             }
         }
+    }
+
+    deinit {
+        Logger.debug(debugEvents, "Event ticking deinited")
     }
 }

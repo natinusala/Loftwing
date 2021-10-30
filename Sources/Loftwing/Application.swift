@@ -23,11 +23,16 @@
 open class Application {
     let creationEvent = Event<Void>()
 
+    @MainActor
     required public init() async {
+        Logger.debug(debugLifecycle, "Entered user application init()")
+
         // Observe our own creation event
         self.creationEvent.observe(owner: self) {
             await self.onCreate()
         }
+
+        Logger.debug(debugLifecycle, "Exited user application init()")
     }
 
     /// Application title.
@@ -73,7 +78,7 @@ public protocol Context {
 }
 
 /// Internal application singleton.
-open class InternalApplication: Context {
+class InternalApplication: Context {
     let configuration: Application
 
     var window: Window
@@ -93,23 +98,29 @@ open class InternalApplication: Context {
     public var skiaContext: OpaquePointer?
 
     /// Creates an application.
+    @MainActor
     init(with configuration: Application) async throws {
-        self.clearPaint = await Paint(color: Color.black)
+        Logger.debug(debugLifecycle, "Entered internal application init()")
+
+        self.clearPaint = Paint(color: Color.black)
 
         self.configuration = configuration
 
         // Initialize platform
+        Logger.debug(debugLifecycle, "Initializing platform")
         self.platform = try await createPlatform(
             initialWindowMode: configuration.initialWindowMode,
             initialGraphicsAPI: try configuration.initialGraphicsAPI ?? GraphicsAPI.findFirstAvailable(),
             initialTitle: configuration.title
         )
 
+        Logger.debug(debugLifecycle, "Platform initialized")
+
         // Create window
         self.window = self.platform.window
 
         // Set context properties
-        self.graphicsAPI = await window.graphicsAPI
+        self.graphicsAPI = window.graphicsAPI
 
         // Create layers
         self.layers = [
@@ -123,12 +134,16 @@ open class InternalApplication: Context {
 
         // Register ourself as the running context
         contextSharedInstance = self
+
+        Logger.debug(debugLifecycle, "Exited internal application init()")
     }
 
     /// Runs the application until closed, either by the user
     /// or through exit().
     @MainActor
     public func main() async throws {
+        Logger.debug(debugLifecycle, "Entered internal application main()")
+
         // Load window
         do {
             try self.window.reload()
@@ -195,6 +210,8 @@ open class InternalApplication: Context {
             // TODO: sleep better with dynamic rate control
             await Task.sleep(16666666)
         }
+
+        Logger.debug(debugLifecycle, "Exited internal application main()")
     }
 
     /// Requests the application to be exited. Returns when the app is fully
@@ -304,7 +321,10 @@ public func getContext() -> Context {
 extension Application {
     /// Main entry point of an application. Use the `@main` attribute to
     /// use it in your executable target. Calling it manually is not supported.
+    @MainActor
     public static func main() async throws {
-        try await InternalApplication(with: self.init()).main()
+        Logger.debug(debugLifecycle, "Entered program main()")
+        try await InternalApplication(with: await self.init()).main()
+        Logger.debug(debugLifecycle, "Exited program main()")
     }
 }

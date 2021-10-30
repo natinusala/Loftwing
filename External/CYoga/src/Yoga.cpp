@@ -227,6 +227,9 @@ static YGConfigRef YGConfigClone(const YGConfig& oldConfig) {
   return config;
 }
 
+#if defined(_WIN32)  // XXX: a bug in clang on Windows prevents this function from being compiled with optimizations
+__attribute__ ((optnone))
+#endif
 static YGNodeRef YGNodeDeepClone(YGNodeRef oldNode) {
   auto config = YGConfigClone(*oldNode->getConfig());
   auto node = new YGNode{*oldNode, config};
@@ -446,6 +449,9 @@ static void YGNodeSetChildrenInternal(
   }
 }
 
+#if defined(_WIN32)  // XXX: a bug in clang on Windows prevents this function from being compiled with optimizations
+__attribute__ ((optnone))
+#endif
 YOGA_EXPORT void YGNodeSetChildren(
     const YGNodeRef owner,
     const YGNodeRef c[],
@@ -454,6 +460,9 @@ YOGA_EXPORT void YGNodeSetChildren(
   YGNodeSetChildrenInternal(owner, children);
 }
 
+#if defined(_WIN32)  // XXX: a bug in clang on Windows prevents this function from being compiled with optimizations
+__attribute__ ((optnone))
+#endif
 YOGA_EXPORT void YGNodeSetChildren(
     YGNodeRef const owner,
     const std::vector<YGNodeRef>& children) {
@@ -1957,6 +1966,9 @@ static float YGNodeComputeFlexBasisForChildren(
 // computedFlexBasis properly computed(To do this use
 // YGNodeComputeFlexBasisForChildren function). This function calculates
 // YGCollectFlexItemsRowMeasurement
+#if defined(_WIN32)  // XXX: a bug in clang on Windows prevents this function from being compiled with optimizations
+__attribute__ ((optnone))
+#endif
 static YGCollectFlexItemsRowValues YGCalculateCollectFlexItemsRowValues(
     const YGNodeRef& node,
     const YGDirection ownerDirection,
@@ -2677,6 +2689,9 @@ static void YGJustifyMainAxis(
 //    passes an available size of undefined then it must also pass a measure
 //    mode of YGMeasureModeUndefined in that dimension.
 //
+#if defined(_WIN32)  // XXX: a bug in clang on Windows prevents this function from being compiled with optimizations
+__attribute__ ((optnone))
+#endif
 static void YGNodelayoutImpl(
     const YGNodeRef node,
     const float availableWidth,

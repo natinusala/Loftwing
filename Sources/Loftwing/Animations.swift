@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#if os(Linux)
-import Glibc
-#endif
+import Foundation // for math functions on Windows
+
+import CLoftwing
 
 /// Type of animation completion callbacks.
 public typealias AnimationCompletionCallback = () -> ()
@@ -130,7 +130,7 @@ public class Animation {
     public func animate(
         from initial: Float,
         to target: Float,
-        during duration: UInt64,
+        during duration: Time,
         with easing: Easing
     ) async -> AnimationHandle {
         // Stop ongoing animation if any
@@ -172,7 +172,7 @@ public class Animation {
     /// Duration is in milliseconds.
     public func animate(
         to target: Float,
-        during duration: UInt64,
+        during duration: Time,
         with easing: Easing
     ) async -> AnimationHandle {
         return await self.animate(
@@ -200,15 +200,15 @@ class AnimationTicking: Ticking {
     var finished: Bool = false
 
     /// How long has the animation been running for? In nanoseconds.
-    var runningFor: UInt64 = 0
+    var runningFor: Time = 0
 
     /// The last time the frame method has been called. In nanoseconds, using
     /// the same clock as `runningFor`.
-    var lastFrameTime: UInt64 = 0
+    var lastFrameTime: Time = 0
 
     /// Duration of the animation.
     /// Animation will be completed when `runningFor` reaches `duration`.
-    let duration: UInt64
+    let duration: Time
 
     let easing: Easing
     let initialValue: Float
@@ -216,7 +216,7 @@ class AnimationTicking: Ticking {
 
     init(
         animation: Animation,
-        during duration: UInt64,
+        during duration: Time,
         easing: Easing,
         from initialValue: Float,
         target targetValue: Float
@@ -226,8 +226,8 @@ class AnimationTicking: Ticking {
         self.initialValue = initialValue
         self.targetValue = targetValue
 
-        // Convert millis duration to nanosec duration
-        self.duration = duration * 1000000
+        // Convert millis duration to usec duration
+        self.duration = duration * 1000
     }
 
     /// Runs the animation for one frame.
@@ -235,7 +235,7 @@ class AnimationTicking: Ticking {
         // Advance the animation value, run callback if finished
         if let animation = self.animation {
             // Compute time
-            let now = getTimeNsec()
+            let now = getTimeUsec()
             let delta = self.lastFrameTime == 0 ? 0 : now - self.lastFrameTime
             self.lastFrameTime = now
             self.runningFor += delta
@@ -407,17 +407,6 @@ public enum Easing {
                 return easingOutBounce(t, b, c, d)
         }
     }
-}
-
-/// Returns current CPU time in nanoseconds.
-func getTimeNsec() -> UInt64 {
-    #if os(Linux)
-        var ts = timespec()
-        clock_gettime(CLOCK_MONOTONIC, &ts)
-        return UInt64(ts.tv_nsec) + UInt64(ts.tv_sec) * UInt64(1000000000);
-    #else
-        #error("Please implement getTimeUsec on your platform")
-    #endif
 }
 
 /// Easing functions below taken from https://github.com/EmmanuelOga/easing under MIT License.
