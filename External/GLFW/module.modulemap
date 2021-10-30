@@ -16,5 +16,5 @@
 
 module GLFW {
     umbrella header "glfw.h"
-    link "glfw3"
+    link "glfw"
 }

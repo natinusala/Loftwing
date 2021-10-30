@@ -15,7 +15,6 @@
     limitations under the License.
 */
 
-
 #include <stdint.h>
 
 typedef int64_t Time;
