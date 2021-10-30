@@ -34,7 +34,7 @@ class MainActivity: Activity {
 
     // This method is executed when the activity is created and pushed onto
     // the stack. It does not mean it's visible yet, but it soon will be.
-    override public func onCreate() async {
+    override public func onCreate() {
         Logger.info("Example activity created")
     }
 }

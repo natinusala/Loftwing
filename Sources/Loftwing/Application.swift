@@ -14,6 +14,9 @@
     limitations under the License.
 */
 
+import Foundation
+import Dispatch
+
 /// A Loftwing application. As the library is designed to make fullscreen,
 /// single window / kiosk apps, running multiple apps per executable target is not
 /// supported.
@@ -23,10 +26,10 @@
 open class Application {
     let creationEvent = Event<Void>()
 
-    required public init() async {
+    required public init() {
         // Observe our own creation event
         self.creationEvent.observe(owner: self) {
-            await self.onCreate()
+            self.onCreate()
         }
     }
 
@@ -65,7 +68,7 @@ open class Application {
     }
 
     /// Method called when the application is created and ready to run.
-    open func onCreate() async {
+    open func onCreate() {
         // Nothing by default
     }
 }
@@ -101,12 +104,12 @@ open class InternalApplication: Context {
     public var skContext: OpaquePointer?
 
     /// Creates an application.
-    init(with configuration: Application) async throws {
+    init(with configuration: Application) throws {
         self.configuration = configuration
-        self.clearPaint = await Paint(color: Color.black)
+        self.clearPaint = Paint(color: Color.black)
 
         // Initialize platform
-        self.platform = try await createPlatform(
+        self.platform = try createPlatform(
             initialWindowMode: configuration.initialWindowMode,
             initialGraphicsAPI: try configuration.initialGraphicsAPI ?? GraphicsAPI.findFirstAvailable(),
             initialTitle: configuration.title,
@@ -117,7 +120,7 @@ open class InternalApplication: Context {
         self.window = self.platform.window
 
         // Set context properties
-        self.graphicsAPI = await window.graphicsAPI
+        self.graphicsAPI = window.graphicsAPI
 
         // Create layers
         self.layers = [
@@ -135,8 +138,7 @@ open class InternalApplication: Context {
 
     /// Runs the application until closed, either by the user
     /// or through exit().
-    @MainActor
-    public func main() async throws {
+    public func main() throws {
         // Load window
         do {
             try self.window.reload()
@@ -155,7 +157,7 @@ open class InternalApplication: Context {
         }
 
         // Push main activity
-        await self.activitiesStackLayer.push(activity: self.configuration.mainActivity)
+        self.activitiesStackLayer.push(activity: self.configuration.mainActivity)
 
         // Resize every layer
         for layer in self.layers {
@@ -166,64 +168,58 @@ open class InternalApplication: Context {
         self.configuration.creationEvent.fire()
 
         // Main loop
-        while(true) {
-            // Poll platform, see if we should exit
-            // TODO: handle ctrlc to gracefully exit
-            if await self.platform.poll() || self.shouldStop {
-                // Exit
-                Logger.info("Exiting...")
+        let mainQueue = DispatchQueue.main
 
-                await self.onExit()
-
-                // Call stop callback
-                if let cb = stopCallback {
-                    cb()
-                }
-
-                // Break the loop to exit
-                break
-            }
-
-            // Clear in black
-            self.window.canvas!.drawPaint(self.clearPaint)
-
-            // Draw layers
-            for layer in self.layers {
-                // TODO: saveLayer and restore?
-                await layer.frame(canvas: self.window.canvas!)
-            }
-
-            // Swap buffers
-            self.window.swapBuffers()
-
-            // Run runner for one frame
-            self.runner.frame()
-
-            // Sleep between frames
-            // TODO: sleep better with dynamic rate control
-            await Task.sleep(16666666)
+        let timer = DispatchSource.makeTimerSource(queue: mainQueue)
+        timer.scheduleRepeating(deadline: .now(), interval: .nanoseconds(20000000), leeway: .nanoseconds(0)) // TODO: remove hardcoded 20000000
+        timer.setEventHandler {
+            self.frame()
         }
+
+        timer.activate()
+
+        // This will run indefinitely until exit() is called, draining
+        // everything in the main queue
+        dispatchMain()
     }
 
-    /// Requests the application to be exited. Returns when the app is fully
-    /// exited and the window is closed.
-    public func exit() async {
-        await withUnsafeContinuation { continuation in
-            self.exit {
-                continuation.resume()
-            }
+    /// Executed every frame
+    func frame() {
+        // Poll platform, see if we should exit
+        // TODO: handle ctrlc to gracefully exit
+        if self.platform.poll() || self.shouldStop {
+            // Exit
+            Logger.info("Exiting...")
+
+            self.onExit()
+
+            // Exit
+            Foundation.exit(0)
         }
+
+        // Clear in black
+        self.window.canvas!.drawPaint(self.clearPaint)
+
+        // Draw layers
+        for layer in self.layers {
+            // TODO: saveLayer and restore?
+            layer.frame(canvas: self.window.canvas!)
+        }
+
+        // Swap buffers
+        self.window.swapBuffers()
+
+        // Run runner for one frame
+        self.runner.frame()
     }
 
-    /// Requests the application to be exited. Runs the given callback when the app is fully
-    /// exited and the window is closed.
-    public func exit(callback: @escaping () -> ()) {
-        self.stopCallback = callback
+    /// Requests the application to be exited.
+    public func exit() {
         self.shouldStop = true
     }
 
     /// Called when the app exits.
-    open func onExit() async {
+    open func onExit() {
         // Nothing by default
     }
 }
@@ -261,7 +257,6 @@ public class Runner {
     }
 
     /// Run every frame to run tickings and collect finished ones.
-    @MainActor
     func frame() {
         self.insideFrame = true
 
@@ -296,7 +291,6 @@ public class Runner {
 /// Can only be used on classes.
 public protocol Ticking: AnyObject {
     /// Method called every frame to run the ticking.
-    @MainActor
     func frame()
 
     /// Must return `true` if the ticking is finished and should be collected.
@@ -314,7 +308,7 @@ public func getContext() -> Context {
 extension Application {
     /// Main entry point of an application. Use the `@main` attribute to
     /// use it in your executable target. Calling it manually is not supported.
-    public static func main() async throws {
-        try await InternalApplication(with: await self.init()).main()
+    public static func main() throws {
+        try InternalApplication(with: self.init()).main()
     }
 }

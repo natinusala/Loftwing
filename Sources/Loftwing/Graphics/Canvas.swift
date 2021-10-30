@@ -17,7 +17,6 @@
 import Skia
 
 /// A canvas is the handle used to draw everything onscreen.*
-@MainActor
 public protocol Canvas {
     /// Draws the given paint on the whole canvas.
     func drawPaint(_ paint: Paint)
@@ -44,7 +43,6 @@ public protocol Canvas {
     )
 }
 
-@MainActor
 public class SkiaCanvas: Canvas {
     let native: OpaquePointer
 

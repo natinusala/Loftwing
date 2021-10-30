@@ -75,7 +75,6 @@ public class Image: View, BindableView {
         }
     }
 
-    @MainActor
     var sampling = SamplingMode.nearest {
         didSet {
             self.paint.setFilteringQuality(self.sampling.filteringQuality)
@@ -86,14 +85,12 @@ public class Image: View, BindableView {
 
     /// Creates a new Image with no source (yet). If `resizeViewToFitImage` is set to `true`,
     /// the view bounds will be resized to fit the image as best as possible.
-    @MainActor
     public convenience init(resizeViewToFitImage: Bool = false) {
         self.init(source: nil, resizeViewToFitImage: resizeViewToFitImage)
     }
 
     /// Creates a new Image with given source. If `resizeViewToFitImage` is set to `true`,
     /// the view bounds will be resized to fit the image as best as possible.
-    @MainActor
     public init(source: ImageSource?, resizeViewToFitImage: Bool = false) {
         self.resizeView = resizeViewToFitImage
         self.source = source
@@ -102,7 +99,6 @@ public class Image: View, BindableView {
 
     /// Creates a new Image with given unowned source. If `resizeViewToFitImage` is set to `true`,
     /// the view bounds will be resized to fit the image as best as possible.
-    @MainActor
     public init(unownedSource: Observable<ImageSource?>, resizeViewToFitImage: Bool = false) {
         self.resizeView = resizeViewToFitImage
         self.source = unownedSource.value
@@ -125,7 +121,6 @@ public class Image: View, BindableView {
 
     /// Sets the sampling mode of the image inside the view.
     /// Default is .nearest.
-    @MainActor
     @discardableResult
     public func samplingMode(_ mode: SamplingMode) -> Self {
         self.sampling = mode
@@ -149,7 +144,6 @@ public class Image: View, BindableView {
 
     /// Called after laying out is done. Used to compute the final image position
     /// and dimensions inside the view.
-    @MainActor
     override public func onLayout() {
         if let imageSource = self.source {
             Logger.debug(
@@ -242,7 +236,6 @@ public class Image: View, BindableView {
         }
     }
 
-    @MainActor
     override public func draw(canvas: Canvas) {
         if let source = self.source {
             canvas.drawImage(

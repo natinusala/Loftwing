@@ -27,6 +27,7 @@ public typealias AnimationTickingCallback = (Float) -> ()
 /// Returned when you start a new animation, used to set the ticking
 /// and completion callbacks. Do not store the handle returned by
 /// the `animate` method.
+/// TODO: replace with promises
 public protocol AnimationHandle {
     /// Executes the given callback when the animation completes.
     @discardableResult
@@ -35,17 +36,6 @@ public protocol AnimationHandle {
     /// Executes the given callback at every frame of the animation.
     @discardableResult
     func observe(callback: @escaping AnimationTickingCallback) -> Self
-}
-
-public extension AnimationHandle {
-    /// Blocks until the animation is completed. Incompatible with `then`.
-    func waitForCompletion() async {
-        await withUnsafeContinuation { continuation in
-            self.then {
-                continuation.resume()
-            }
-        }
-    }
 }
 
 public struct RegularAnimationHandle: AnimationHandle {
@@ -132,7 +122,7 @@ public class Animation {
         to target: Float,
         during duration: UInt64,
         with easing: Easing
-    ) async -> AnimationHandle {
+    ) -> AnimationHandle {
         // Stop ongoing animation if any
         if let runningTicking = self.currentTicking {
             // Cancel the ticking, break the weak reference
@@ -174,8 +164,8 @@ public class Animation {
         to target: Float,
         during duration: UInt64,
         with easing: Easing
-    ) async -> AnimationHandle {
-        return await self.animate(
+    ) -> AnimationHandle {
+        return self.animate(
             from: self.value,
             to: target,
             during:duration,

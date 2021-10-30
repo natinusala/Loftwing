@@ -18,7 +18,6 @@ import Skia
 import Glad
 
 /// Represents a source for an image.
-@MainActor
 public protocol ImageSource {
     /// Pointer to the native Skia image.
     var skImage: OpaquePointer? { get }
@@ -47,7 +46,6 @@ public enum Origin {
 
 /// An image source backed by a GPU texture with fixed width, height and pixel format.
 /// Use the `texture` property to get the GPU texture handle.
-@MainActor
 public class GPUTexture: ImageSource {
     public var skImage: OpaquePointer? = nil
 
@@ -203,7 +201,6 @@ public enum GPUTextureError: Error {
 }
 
 /// Represents a two-dimensional pixels array that you can write to.
-@MainActor
 public class Bitmap: GPUTexture {
     /// Writes content of given unsafe raw buffer to the bitmap.
     /// It is assumed that the pixels are in the correct pixel format, and that the buffer

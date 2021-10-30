@@ -39,13 +39,11 @@ open class Box: View {
 
     /// The content of that box, statically defined.
     /// Used when creating custom views.
-    @MainActor
     open var content: View {
         EmptyView()
     }
 
     /// Creates a box with the given children.
-    @MainActor
     public init(_ axis: Axis, @BoxBuilder builder: () -> [View]) {
         super.init()
 
@@ -96,13 +94,12 @@ open class Box: View {
         return self
     }
 
-    @MainActor
-    open override func frame(canvas: Canvas) async {
-        await super.frame(canvas: canvas)
+    open override func frame(canvas: Canvas) {
+        super.frame(canvas: canvas)
 
         // Run frame of every children
         for child in self.children {
-            await child.frame(canvas: canvas)
+            child.frame(canvas: canvas)
         }
     }
 

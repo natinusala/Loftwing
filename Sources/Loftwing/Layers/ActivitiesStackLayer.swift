@@ -18,19 +18,18 @@
 class ActivitiesStackLayer: Layer {
     var stack: ActivitiesStack = ActivitiesStack()
 
-    @MainActor
-    func frame(canvas: Canvas) async {
+    func frame(canvas: Canvas) {
         // Draw all activities
         // TODO: do it better (see brls)
         for activity in self.stack {
             // TODO: saveLayer and restore?
-            await activity.frame(canvas: canvas)
+            activity.frame(canvas: canvas)
         }
     }
 
     /// Pushes an activity on the stack.
-    func push(activity: Activity) async {
-        await self.stack.push(activity: activity)
+    func push(activity: Activity) {
+        self.stack.push(activity: activity)
     }
 
     func resizeToFit(width: Float, height: Float) {
@@ -46,8 +45,7 @@ class ActivitiesStackLayer: Layer {
 class ActivitiesStack: Sequence {
     var stack: [Activity] = []
 
-    @MainActor
-    func push(activity: Activity) async {
+    func push(activity: Activity) {
         self.stack.append(activity)
 
         // Set activity content view

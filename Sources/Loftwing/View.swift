@@ -52,7 +52,7 @@ extension YGMeasureMode {
 
 /// Type of functions called to measure a view. Parameters are width, width measure mode,
 /// height and height measure mode. Should returns a width, height tuple.
-public typealias ViewMeasureFunc = @MainActor (Float, ViewMeasureMode, Float, ViewMeasureMode) -> (width: Float?, height: Float?)
+public typealias ViewMeasureFunc = (Float, ViewMeasureMode, Float, ViewMeasureMode) -> (width: Float?, height: Float?)
 
 /// A view is the basic building block of an application's UI.
 /// The whole UI is made of a tree of views.
@@ -97,7 +97,6 @@ open class View: FrameProtocol {
         )
     }
 
-    @MainActor
     public init() {
         // Create node
         self.ygNode = YGNodeNew()
@@ -133,7 +132,6 @@ open class View: FrameProtocol {
     /// Called by the parent view when their layout changes.
     /// Discards calculated layout properties so that they will be
     /// calculated again the next time we request them (usually next frame).
-    @MainActor
     open func onLayoutChanged(parentX: Float, parentY: Float) {
         self.x = parentX + YGNodeLayoutGetLeft(self.ygNode)
         self.y = parentY + YGNodeLayoutGetTop(self.ygNode)
@@ -154,14 +152,12 @@ open class View: FrameProtocol {
     }
 
     /// Called when the view position and dimensions changes.
-    @MainActor
     open func onLayout() {
         // Nothing to do
     }
 
     /// Called at the beginning of a frame when the view is dirty. Recalculates
     /// the layout and propagates the change through the whole tree if needed.
-    @MainActor
     open func layout() {
         // Don't layout if we have a parent, instead wait for our parent to layout
         if self.parent != nil {
@@ -181,8 +177,7 @@ open class View: FrameProtocol {
 
     /// Called every frame. Do not override to draw your view's content, override
     /// `draw()` instead.
-    @MainActor
-    open func frame(canvas: Canvas) async {
+    open func frame(canvas: Canvas) {
         // Layout if needed
         if self.dirty {
             self.layout()
@@ -199,7 +194,6 @@ open class View: FrameProtocol {
 
     /// Called every frame to draw the view onscreen. Views may not draw outside of
     /// their bounds, they can be clipped if they do so.
-    @MainActor
     open func draw(canvas: Canvas) {
         // Does nothing by default
     }
@@ -334,12 +328,10 @@ public class EmptyView: View, BindableView {
 public class Rectangle: View, BindableView {
     let paint: Paint
 
-    @MainActor
     public init(color: Color) {
         self.paint = Paint(color: color)
     }
 
-    @MainActor
     open override func draw(canvas: Canvas) {
         // TODO: cache that rect, reconstruct it on layout only
         let rect = Rect(

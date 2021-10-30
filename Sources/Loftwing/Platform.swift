@@ -28,9 +28,9 @@ func createPlatform(
     initialGraphicsAPI graphicsAPI: GraphicsAPI,
     initialTitle title: String,
     resetContext: Bool
-) async throws -> Platform {
+) throws -> Platform {
     // TODO: only return GLFW if it's actually supported
-    return try await GLFWPlatform(
+    return try GLFWPlatform(
         initialWindowMode: windowMode,
         initialGraphicsAPI: graphicsAPI,
         initialTitle: title,
@@ -48,14 +48,14 @@ protocol Platform {
         initialGraphicsAPI graphicsAPI: GraphicsAPI,
         initialTitle: String,
         resetContext: Bool
-    ) async throws
+    ) throws
 
     /// Current window handle.
     var window: Window { get }
 
     /// Called before every frame begins to poll events and prepare the frame.
     /// Must return true if the application should exit.
-    func poll() async -> Bool
+    func poll() -> Bool
 }
 
 /// The window mode of an application.
@@ -88,7 +88,6 @@ public enum GraphicsAPI {
 }
 
 /// Represents an application window.
-@MainActor
 public protocol Window {
     /// Graphics canvas.
     var canvas: Canvas? { get }

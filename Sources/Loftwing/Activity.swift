@@ -21,7 +21,6 @@
 /// the content property.
 open class Activity: FrameProtocol {
     /// The top-level view of that activity.
-    @MainActor
     open var content: View {
         EmptyView()
     }
@@ -33,24 +32,22 @@ open class Activity: FrameProtocol {
     public init() {
         // Observe our own creation event
         self.creationEvent.observe(owner: self) {
-            await self.onCreate()
+            self.onCreate()
         }
     }
 
     /// Runs the activity for one frame.
-    @MainActor
-    public func frame(canvas: Canvas) async {
+    public func frame(canvas: Canvas) {
         // Draw the mounted view.
         if let mountedView = self.mountedContent {
-            await mountedView.frame(canvas: canvas)
+            mountedView.frame(canvas: canvas)
         }
     }
 
     /// Executed once when the activity is created.
-    open func onCreate() async {}
+    open func onCreate() {}
 
     /// Creates the content tree and stores it in the activity.
-    @MainActor
     func mountContent() {
         // Never mount content twice
         if self.mountedContent != nil {

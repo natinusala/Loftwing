@@ -18,7 +18,7 @@
 /// The observer only keeps a weak reference to the owner. This allows
 /// automatically unregistering the observer once the owner gets released.
 public class Observer<CallbackParameter> {
-    public typealias Callback = (CallbackParameter) async -> ()
+    public typealias Callback = (CallbackParameter) -> ()
     public typealias Owner = AnyObject
 
     let callback: Callback
@@ -66,15 +66,11 @@ public class Event<CallbackParameter> {
             return false
         }
 
-        // Add a ticking for every observer
-        let runner = getContext().runner
-
+        // Execute callbacks
         for observer in self.observers {
             if observer.owner != nil {
                 Logger.debug(debugEvents, "Firing event for \(self.observers.count) observers")
-                runner.addTicking(EventTicking<CallbackParameter, Void, Error>(event: self) {
-                    await observer.callback(parameter)
-                })
+                observer.callback(parameter)
             }
             else {
                 Logger.debug(debugEvents, "Observer owner has been released, not firing the event")
@@ -88,8 +84,7 @@ public class Event<CallbackParameter> {
         return true
     }
 
-    /// Starts observing the event. The given callback will be executed asynchronously
-    /// whenever someone fires the event.
+    /// Starts observing the event.
     /// The owner is used to automatically remove the observer when the owner gets
     /// released (we keep a weak reference to the owner to do so).
     public func observe(
@@ -97,75 +92,6 @@ public class Event<CallbackParameter> {
         with callback: @escaping ObserverType.Callback)
     {
         self.observers.append(Observer(owner: owner, callback: callback))
-    }
-}
-
-/// A ticking related to an event, created when the event is fired.
-/// It holds a weak reference to the event - when the event is deinited, the ticking
-/// and its underlying task are automatically stopped.
-/// The ticking acts as a lifecycle manager for the underlying task, it never
-/// executes anything.
-class EventTicking<CallbackParameter, Success, Failure>: Ticking where Failure: Error {
-    typealias EventTask = Task<Success, Failure>
-
-    /// Weak reference to the associated event.
-    weak var event: Event<CallbackParameter>?
-
-    /// The underlying task. Must be optional and set to nil in case we use it
-    /// before it's actually set (cannot use self until all properties are set).
-    var task: EventTask? = nil
-
-    /// Is the underlying task finished or cancelled? This is a one-way boolean (false -> true)
-    /// to avoid data races and avoid the need for an actor (which is possible but would add
-    /// another layer to the events / tasks stack).
-    var finished = false {
-        willSet(newValue) {
-            if self.finished && !newValue {
-                fatalError("Event ticking has already been finished")
-            }
-        }
-    }
-
-    init(
-        event: Event<CallbackParameter>,
-        operation: @escaping () async -> Success
-    ) where Failure == Error {
-        self.event = event
-
-        // Start the task
-        self.task = EventTask {
-            // Run the actual task
-            Logger.debug(debugEvents, "Running event task")
-            let result = await operation()
-
-            // Set state to finished
-            Logger.debug(debugEvents, "Event ticking marked as finished")
-            self.finished = true
-
-            return result
-        }
-    }
-
-    func frame() {
-        // Don't do anything if the task is already finished
-        if self.finished {
-            return
-        }
-
-        // Check if the event has been deinited, in which case cancel the task
-        // We have to trust that it's actually cancelling, but since it's cooperative
-        // there is not much we can do to guarantee cancellation.
-        if self.event == nil {
-            // If the task is not set (yet), just wait for the next frame to
-            // collect it
-            if let task = self.task {
-                Logger.debug(debugEvents, "Event bound to task was deinited, cancelling task")
-                task.cancel()
-                self.finished = true
-            } else {
-                Logger.debug(debugEvents, "Event bound to task was deinited but task not handle not available yet")
-            }
-        }
     }
 }
 

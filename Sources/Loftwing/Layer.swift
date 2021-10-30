@@ -27,6 +27,5 @@ public protocol Layer: FrameProtocol {
 /// draws things onscreen: layers, views, activities...
 public protocol FrameProtocol {
     /// Runs for one frame.
-    @MainActor
-    func frame(canvas: Canvas) async
+    func frame(canvas: Canvas)
 }

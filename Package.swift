@@ -83,12 +83,7 @@ let package = Package(
         // System libraries
         .systemLibrary(name: "GLFW", path: "External/GLFW", pkgConfig: "glfw3"),
         .systemLibrary(name: "Skia", path: "External/Skia", pkgConfig: debugSkia ? "skia_loftwing_debug" : "skia_loftwing"),
-        // Test targets
-        // TODO: Use Quick + Nimble once it has full async support
-        // Not even XCTest has async support, what's the point?
-        // .testTarget(
-        //     name: "LoftwingTests",
-        //     dependencies: ["Loftwing"]
-        // ),
+
+        // TODO: Test target using Quick + Nimble
     ]
 )

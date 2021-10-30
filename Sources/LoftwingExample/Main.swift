@@ -19,12 +19,6 @@ import Loftwing
 // Declare a Loftwing application.
 @main
 class ExampleApplication: Application {
-    /// XXX: Required to prevent:
-    /// "SIL verification failed: cannot call an async function from a non async function"
-    required public init() async {
-        await super.init()
-    }
-
     // Application title
     override var title: String {
         "Loftwing Example Application"
