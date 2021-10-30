@@ -40,3 +40,5 @@ public let glFramebufferRenderbuffer = glad_glFramebufferRenderbuffer!
 public let glCheckFramebufferStatus = glad_glCheckFramebufferStatus!
 public let glClear = glad_glClear!
 public let glDebugMessageCallback = glad_glDebugMessageCallback!
+public let glGetTexLevelParameteriv = glad_glGetTexLevelParameteriv!
+public let glGetString = glad_glGetString!

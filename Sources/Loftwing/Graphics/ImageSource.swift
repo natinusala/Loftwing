@@ -59,7 +59,7 @@ public class GPUTexture: ImageSource {
 
     public let drawRect: Rect
 
-    /// Creates a new GPU texture with no width or height.
+    /// Creates a new GPU texture.
     public init(
         width: Float,
         height: Float,

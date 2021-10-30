@@ -20,6 +20,13 @@ import PackageDescription
 /// Should we link against the debug Skia build?
 let debugSkia = false
 
+// Find out what GLFW to use
+#if os(Windows)
+    let glfw = Target.systemLibrary(name: "GLFW", path: "External/GLFWWindows", pkgConfig: "glfw3")
+#else
+    let glfw = Target.systemLibrary(name: "GLFW", path: "External/GLFWLinux", pkgConfig: "glfw3")
+#endif
+
 let package = Package(
     name: "Loftwing",
     products: [
@@ -80,7 +87,7 @@ let package = Package(
             path: "External/Glad"
         ),
         // System libraries
-        .systemLibrary(name: "GLFW", path: "External/GLFW", pkgConfig: "glfw3"),
+        glfw,
         .systemLibrary(name: "Skia", path: "External/Skia", pkgConfig: debugSkia ? "skia_loftwing_debug" : "skia_loftwing"),
 
         // TODO: Test target using Quick + Nimble

@@ -121,7 +121,7 @@ class GLFWWindow: Window {
 
         // Setup hints
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
         if enableSRGB {
@@ -200,8 +200,8 @@ class GLFWWindow: Window {
                 if debugRenderer {
                     glEnable(GLenum(GL_DEBUG_OUTPUT))
                     glDebugMessageCallback(
-                        { source, type, id, severity, length, message, _ in
-                            Logger.debug(debugRenderer, "OpenGL \(severity) \(id): \(message.str ?? "unspecified")")
+                        { _, type, id, severity, _, message, _ in
+                            onGlDebugMessage(severity: severity, type: type,  id: id, message: message)
                         },
                         nil
                     )
@@ -278,9 +278,10 @@ class GLFWWindow: Window {
                 glGetIntegerv(GLenum(GL_MAJOR_VERSION), &majorVersion)
                 glGetIntegerv(GLenum(GL_MINOR_VERSION), &minorVersion)
 
-                // TODO: handle case where GL_MINOR_VERSION is not available and use glGetString(GL_VERSION) (how can I tell?)
+                // TODO: better opengl logs (bullet point list, add vendor)
 
                 Logger.info("OpenGL version: \(majorVersion).\(minorVersion)")
+                Logger.info("GLSL language version: \(String(cString: glGetString(GLenum(GL_SHADING_LANGUAGE_VERSION))!))")
         }
 
         // Finalize init
@@ -300,6 +301,7 @@ class GLFWWindow: Window {
     }
 
     func makeContextCurrent() {
+        Logger.debug(debugGraphics, "Making window context current")
         glfwMakeContextCurrent(self.window)
     }
 
@@ -315,6 +317,14 @@ class GLFWWindow: Window {
     }
 
     func makeOffscreenContextCurrent(_ ctx: OpaquePointer?) {
+        Logger.debug(debugGraphics, "Making offscreen context current")
         glfwMakeContextCurrent(ctx)
     }
+}
+
+private func onGlDebugMessage(severity: GLenum, type: GLenum, id: GLuint, message: UnsafePointer<CChar>?) {
+    if type == GLenum(GL_DEBUG_TYPE_ERROR) {
+        fatalError()
+    }
+    Logger.debug(debugRenderer, "OpenGL \(severity) \(id): \(message.str ?? "unspecified")")
 }
