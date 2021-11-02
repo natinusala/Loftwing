@@ -15,7 +15,6 @@
 */
 
 import Foundation
-import Dispatch
 
 /// A Loftwing application. As the library is designed to make fullscreen,
 /// single window / kiosk apps, running multiple apps per executable target is not
@@ -67,9 +66,16 @@ open class Application {
         false
     }
 
-    /// Method called when the application is created and ready to run.
+    /// Method called when the application is fully created and ready to run.
+    /// More precisely, this is called after init and before the very first frame.
     open func onCreate() {
         // Nothing by default
+    }
+
+    /// Returns the amount of time to sleep between frames, in
+    /// seconds.
+    open var sleepAmount: Double {
+        return 0.016666666 // naive 60FPS
     }
 }
 
@@ -157,6 +163,12 @@ open class InternalApplication: Context {
 
         // Fire the creation event when everything is ready
         self.configuration.creationEvent.fire()
+    }
+
+    /// Returns the amount of time to sleep between frames, in
+    /// seconds.
+    var sleepAmount: Double {
+        return self.configuration.sleepAmount
     }
 
     /// Executed every frame.
@@ -284,7 +296,8 @@ public func getContext() -> Context {
 extension Application {
     /// Main entry point of an application. Use the `@main` attribute to
     /// use it in your executable target. Calling it manually is not supported.
-    public static func main() {
+    public static func main() throws {
+#if false
         let queue = DispatchQueue.main
 
         // Setup main loop timer
@@ -307,5 +320,16 @@ extension Application {
         // This will run indefinitely until exit() is called, draining
         // everything in the main queue
         dispatchMain()
+#endif
+        let app = try InternalApplication(with: self.init())
+
+        while true {
+            app.frame()
+
+            let sleepAmount = app.sleepAmount
+            if sleepAmount > 0 {
+                Thread.sleep(forTimeInterval: sleepAmount)
+            }
+        }
     }
 }
