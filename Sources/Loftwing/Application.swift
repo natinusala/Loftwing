@@ -16,6 +16,8 @@
 
 import Foundation
 
+import CLoftwing
+
 /// A Loftwing application. As the library is designed to make fullscreen,
 /// single window / kiosk apps, running multiple apps per executable target is not
 /// supported.
@@ -72,10 +74,12 @@ open class Application {
         // Nothing by default
     }
 
-    /// Returns the amount of time to sleep between frames, in
-    /// seconds.
-    open var sleepAmount: Double {
-        return 0.016666666 // naive 60FPS
+    /// Delay between two frames, in seconds.
+    /// Use 0 to have no delay and run frames as fast
+    /// as possible (will take all CPU if you don't use your own
+    /// frame pacing method).
+    open var frameTime: Double {
+        return 0.016666666 // 60FPS
     }
 }
 
@@ -165,10 +169,8 @@ open class InternalApplication: Context {
         self.configuration.creationEvent.fire()
     }
 
-    /// Returns the amount of time to sleep between frames, in
-    /// seconds.
-    var sleepAmount: Double {
-        return self.configuration.sleepAmount
+    var frameTime: Double {
+        return self.configuration.frameTime
     }
 
     /// Executed every frame.
@@ -297,39 +299,43 @@ extension Application {
     /// Main entry point of an application. Use the `@main` attribute to
     /// use it in your executable target. Calling it manually is not supported.
     public static func main() throws {
-#if false
-        let queue = DispatchQueue.main
-
-        // Setup main loop timer
-        let timer = DispatchSource.makeTimerSource(queue: queue)
-        timer.scheduleRepeating(deadline: .now(), interval: .nanoseconds(20000000), leeway: .nanoseconds(0)) // TODO: remove hardcoded 20000000
-
-        // Since the DispatchQueue main thread and our own main thread may not be the same
-        // we need to run the whole app init on the main queue.
-        queue.async {
-            // Init app
-            let app = try! InternalApplication(with: self.init())
-
-            // Activate main loop timer
-            timer.setEventHandler {
-                app.frame()
-            }
-            timer.activate()
-        }
-
-        // This will run indefinitely until exit() is called, draining
-        // everything in the main queue
-        dispatchMain()
-#endif
         let app = try InternalApplication(with: self.init())
 
         while true {
+            let beginFrameTime = Date()
+
+            // Run one app frame
             app.frame()
 
-            let sleepAmount = app.sleepAmount
-            if sleepAmount > 0 {
-                Thread.sleep(forTimeInterval: sleepAmount)
+            // Consume main queue (events, background tasks completion handlers...)
+            drainMainQueue()
+
+            // Sleep for however much time is needed
+            if app.frameTime > 0 {
+                let endFrameTime = Date()
+                let currentFrameTime = beginFrameTime.distance(to: endFrameTime)
+                var sleepAmount: TimeInterval = 0
+
+                // Only sleep if the frame took less time to render
+                // than desired frame time
+                if currentFrameTime < app.frameTime {
+                    sleepAmount = app.frameTime - currentFrameTime
+                }
+
+                if sleepAmount > 0 {
+                    print("Sleeping for \(sleepAmount) seconds")
+                    Thread.sleep(forTimeInterval: sleepAmount)
+                }
             }
         }
     }
+}
+
+/// Runs everything in the main queue.
+private func drainMainQueue() {
+    // XXX: Dispatch does not expose a way to drain the main queue
+    // without parking the main thread, so we need to use obscure
+    // CoreFoundation / Cocoa functions.
+    // See https://github.com/apple/swift-corelibs-libdispatch/blob/macosforge/trac/ticket/38.md
+    _dispatch_main_queue_callback_4CF(nil)
 }

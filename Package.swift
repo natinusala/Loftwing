@@ -41,6 +41,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/onevcat/Rainbow.git", .upToNextMajor(from: "4.0.0")),
+        .package(url: "https://github.com/natinusala/Async", .branch("a20ccabfdaf740f14b42eadf46fa9baac882078f")),
     ],
     targets: [
         // Loftwing targets
@@ -52,7 +53,8 @@ let package = Package(
                 "GLFW",
                 "Glad",
                 "Skia",
-                "Rainbow"
+                "Rainbow",
+                "Async",
             ]
         ),
         .target(

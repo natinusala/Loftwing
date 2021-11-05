@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+import Async
+
 /// An observer is the combination of a callback and its owner.
 /// The observer only keeps a weak reference to the owner. This allows
 /// automatically unregistering the observer once the owner gets released.
@@ -41,6 +43,8 @@ public class Observer<CallbackParameter> {
 ///
 /// When you want to fire the event (sending the signal to every observer and running
 /// their callback), call the fire(_ parameter:) method.
+///
+/// Events are executed on the main thread.
 /// TODO: rework CallbackParameter once Swift has variadic generic parameters
 public class Event<CallbackParameter> {
     public typealias ObserverType = Observer<CallbackParameter>
@@ -70,7 +74,9 @@ public class Event<CallbackParameter> {
         for observer in self.observers {
             if observer.owner != nil {
                 Logger.debug(debugEvents, "Firing event for \(self.observers.count) observers")
-                observer.callback(parameter)
+                Async.main {
+                    observer.callback(parameter)
+                }
             }
             else {
                 Logger.debug(debugEvents, "Observer owner has been released, not firing the event")
