@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "Async",
+        "repositoryURL": "https://github.com/natinusala/Async",
+        "state": {
+          "branch": null,
+          "revision": "a20ccabfdaf740f14b42eadf46fa9baac882078f",
+          "version": null
+        }
+      },
+      {
         "package": "Rainbow",
         "repositoryURL": "https://github.com/onevcat/Rainbow.git",
         "state": {

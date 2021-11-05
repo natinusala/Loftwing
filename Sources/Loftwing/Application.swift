@@ -323,7 +323,6 @@ extension Application {
                 }
 
                 if sleepAmount > 0 {
-                    print("Sleeping for \(sleepAmount) seconds")
                     Thread.sleep(forTimeInterval: sleepAmount)
                 }
             }

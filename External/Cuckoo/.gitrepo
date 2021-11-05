@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/Brightify/Cuckoo
+	branch = master
+	commit = 8f1d1f1d09ce42f93b5c3e3599fda8cd28cf3bc9
+	parent = 705a34855a395dfe64a965f0c006418e9be7a774
+	method = merge
+	cmdver = 0.4.1
