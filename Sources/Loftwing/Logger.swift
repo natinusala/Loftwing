@@ -17,8 +17,8 @@
 import Rainbow
 
 public actor Logger {
-    // TODO: implement log levels
     // TODO: implement "labels" so that apps can enable / disable Loftwing logs
+    // TODO: use #file, #line and #function to improve debug messages
 
     /// Logs an informative message.
     public static func info(_ message: String) {
