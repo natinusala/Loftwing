@@ -43,9 +43,9 @@ class ActivitiesStackLayer: Layer {
 /// Responsible for pushing and popping activities from the stack, as well
 /// as handling activities lifecycles.
 class ActivitiesStack: Sequence {
-    var stack: [Activity] = []
+    var stack: [ActivityProtocol] = []
 
-    func push(activity: Activity) {
+    func push(activity: ActivityProtocol) {
         self.stack.append(activity)
 
         // Set activity content view
@@ -55,8 +55,8 @@ class ActivitiesStack: Sequence {
         activity.creationEvent.fire()
     }
 
-    typealias Iterator = Array<Activity>.Iterator
-    typealias Element = Activity
+    typealias Iterator = Array<ActivityProtocol>.Iterator
+    typealias Element = ActivityProtocol
     func makeIterator() -> Iterator {
         return self.stack.makeIterator()
     }

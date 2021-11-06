@@ -41,7 +41,12 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/onevcat/Rainbow.git", .upToNextMajor(from: "4.0.0")),
-        .package(url: "https://github.com/natinusala/Async", .branch("a20ccabfdaf740f14b42eadf46fa9baac882078f")),
+        .package(url: "https://github.com/natinusala/Async.git", .branch("a20ccabfdaf740f14b42eadf46fa9baac882078f")),
+
+        // Testing dependencies
+        .package(url: "https://github.com/Quick/Quick.git", .upToNextMajor(from: "4.0.0")),
+        .package(url: "https://github.com/Quick/Nimble.git", .upToNextMajor(from: "9.2.1")),
+        .package(url: "https://github.com/Brightify/Cuckoo.git", .upToNextMajor(from: "1.5.1"))
     ],
     targets: [
         // Loftwing targets
@@ -92,6 +97,10 @@ let package = Package(
         glfw,
         .systemLibrary(name: "Skia", path: "External/Skia", pkgConfig: debugSkia ? "skia_loftwing_debug" : "skia_loftwing"),
 
-        // TODO: Test target using Quick + Nimble
+        // Test targets
+        .testTarget(
+            name: "LoftwingTests",
+            dependencies: ["Loftwing", "Quick", "Nimble", "Cuckoo"]
+        )
     ]
 )

@@ -14,12 +14,24 @@
     limitations under the License.
 */
 
+/// Protocol of an activity.
+protocol ActivityProtocol: FrameProtocol {
+    /// Creates the content tree and stores it in the activity.
+    func mountContent()
+
+    /// Event fired when the activity is created.
+    var creationEvent: Event<Void> { get }
+
+    /// Resize the activity content to given dimensions.
+    func resizeToFit(width: Float, height: Float)
+}
+
 /// An activity corresponds to a "screen" the user can enter and exit.
 /// An application is made of a stack of activity.
 ///
 /// Each activity contains one top-level view. You can define it by redefining
 /// the content property.
-open class Activity: FrameProtocol {
+open class Activity: ActivityProtocol {
     /// The top-level view of that activity.
     open var content: View {
         EmptyView()
