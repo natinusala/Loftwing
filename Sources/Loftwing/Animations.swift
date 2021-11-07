@@ -47,19 +47,13 @@ public struct RegularAnimationHandle: AnimationHandle {
 
     @discardableResult
     public func then(callback: @escaping AnimationCompletionCallback) -> Self {
-        if let animation = self.animation {
-            animation.completionCallback = callback
-        }
-
+        self.animation?.completionCallback = callback
         return self
     }
 
     @discardableResult
     public func observe(callback: @escaping AnimationTickingCallback) -> Self {
-        if let animation = self.animation {
-            animation.tickingCallback = callback
-        }
-
+        self.animation?.tickingCallback = callback
         return self
     }
 }
@@ -263,10 +257,8 @@ class AnimationTicking: Ticking {
     /// Cancels the animation.
     func cancel() {
         // Run completion callback if the animation still lives
-        if let animation = self.animation {
-            animation.completionCallback()
-            animation.completionCallback = {}
-        }
+        self.animation?.completionCallback()
+        self.animation?.completionCallback = {}
 
         // Break the weak reference, this will cause the ticking to be finished
         // at next frame.

@@ -50,16 +50,12 @@ open class ContentActivity: Activity {
     /// Runs the activity for one frame.
     public func frame(canvas: Canvas) {
         // Draw the mounted view.
-        if let mountedContent = self.mountedContent {
-            mountedContent.frame(canvas: canvas)
-        }
+        self.mountedContent?.frame(canvas: canvas)
     }
 
     public func resizeToFit(width: Float, height: Float) {
-        if let mountedContent = self.mountedContent {
-            mountedContent.width(width.dip)
-            mountedContent.height(height.dip)
-        }
+        self.mountedContent?.width(width.dip)
+        self.mountedContent?.height(height.dip)
     }
 
     open func onCreate() {

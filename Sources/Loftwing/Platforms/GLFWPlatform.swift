@@ -46,12 +46,7 @@ class GLFWPlatform: Platform {
     ) throws {
         // Set error callback
         glfwSetErrorCallback {code, error in
-            if let errorString = error {
-                Logger.error("GLFW error \(code): \(errorString)")
-            }
-            else {
-                Logger.error("GLFW error \(code): unknown")
-            }
+            Logger.error("GLFW error \(code): \(error.str ?? "unknown")")
         }
 
         // Init GLFW

@@ -288,8 +288,8 @@ public class ViewBinding<WrappedType: View> {
         self.view = nil
     }
 
-    public init(view: WrappedType?) {
-        self.view = view
+    public init(wrappedValue: WrappedType?) {
+        self.view = wrappedValue
     }
 
     /// Returns the bound view reference.
