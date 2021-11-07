@@ -38,14 +38,14 @@ extension YGMeasureMode {
     var viewMeasureMode: ViewMeasureMode {
         // XXX: Find out why Swift only keeps raw values for Yoga enums
         switch self.rawValue {
-            case 1:
+            case 0:
                 return .undefined
-            case 2:
+            case 1:
                 return .exactly
-            case 3:
+            case 2:
                 return .atMost
             default:
-                fatalError("Unknown YGMeasureMode")
+                fatalError("Unknown YGMeasureMode \(self.rawValue)")
         }
     }
 }

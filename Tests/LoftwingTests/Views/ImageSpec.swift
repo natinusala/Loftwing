@@ -17,6 +17,7 @@
 import Quick
 import Nimble
 
+import Yoga
 @testable import Loftwing
 
 class ImageSpec: QuickSpec {
@@ -52,6 +53,40 @@ class ImageSpec: QuickSpec {
                                 i.invalidateLayout()
                             }
                         }
+                    }
+                }
+            }
+
+            context("when scaling mode changes") {
+                it("invalidates layout") {
+                    let image = ImageMock(source: ImageSourceMock())
+                    image.scalingMode(.stretch)
+                    image.mock.expectWithInstance(image) { i in
+                        i.invalidateLayout()
+                    }
+                }
+            }
+
+            context("when laying out") {
+                it("stretches the image") {
+                    let source = ImageSourceMock()
+                    let image = ImageMock(source: source)
+
+                    image.width(500.dip)
+                    image.height(250.dip)
+                    image.scalingMode(.stretch)
+
+                    image.layout()
+
+                    expect(image.imageRect).to(equal(Rect(x: 0, y: 0, width: 500, height: 250)))
+                }
+            }
+
+            describe("the measure func") {
+                context("when resizing is disabled") {
+                    it("returns no size") {
+                        let image = ImageMock(source: ImageSourceMock(), resizeViewToFitImage: false)
+                        expect(image.measureFunc(YGUndefined, .undefined, YGUndefined, .undefined)).to(equal((nil, nil)))
                     }
                 }
             }
