@@ -52,7 +52,7 @@ open class Application {
 
     /// The first activity started by the application.
     open var mainActivity: Activity {
-        Activity()
+        EmptyActivity()
     }
 
     /// The layer containing the "content" of your app: a game, a video player...
@@ -83,7 +83,7 @@ open class Application {
     }
 }
 
-/// The "context" of an app can be retreived from anywhere using `getContext().
+/// The "context" of an app can be retrieved from anywhere using `getContext().
 /// Contains app state, metadata and useful "managers".
 public protocol Context {
     var runner: Runner { get }

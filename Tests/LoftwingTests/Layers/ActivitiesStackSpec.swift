@@ -22,10 +22,10 @@ import Nimble
 class ActivitiesStackSpec: QuickSpec {
     override func spec() {
         describe("an activities stack") {
-            var stack: ActivitiesStack<ActivityMock>!
+            var stack: ActivitiesStack!
 
             beforeEach {
-                stack = ActivitiesStack<ActivityMock>()
+                stack = ActivitiesStack()
             }
 
             it("contains activities") {
@@ -40,7 +40,7 @@ class ActivitiesStackSpec: QuickSpec {
                 }
 
                 for activity in activities {
-                    expect(stack).to(contain(activity))
+                    expect(stack).to(containElementSatisfying { $0 === activity })
                 }
             }
 
@@ -49,32 +49,11 @@ class ActivitiesStackSpec: QuickSpec {
 
                 stack.push(activity: activity)
 
-                expect(stack).to(contain(activity))
+                expect(stack).to(containElementSatisfying { $0 === activity })
             }
 
             it("contains no activities") {
                 expect(stack).to(beEmpty())
-            }
-
-            it("mounts content") {
-                let activity = ActivityMock()
-
-                stack.push(activity: activity)
-
-                activity.expect { a in
-                    a.mountContent()
-                }
-            }
-
-            it("fires creation event") {
-                let activity = ActivityMock()
-
-                stack.push(activity: activity)
-
-                let creationEventMock = activity.creationEvent as! EventMock<Void>
-                creationEventMock.mock.expectWithInstance(creationEventMock) { e in
-                    e.fire()
-                }
             }
         }
     }

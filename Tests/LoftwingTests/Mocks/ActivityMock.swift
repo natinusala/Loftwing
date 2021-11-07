@@ -20,7 +20,7 @@ import Impostor
 
 @testable import Loftwing
 
-class ActivityMock: EquatableMock<ActivityProtocol>, ActivityProtocol {
+class ActivityMock: EquatableMock<Activity>, Activity {
     let creationEvent: Event<Void> = EventMock<Void>()
 
     func mountContent() {
@@ -32,6 +32,10 @@ class ActivityMock: EquatableMock<ActivityProtocol>, ActivityProtocol {
     }
 
     func frame(canvas: Canvas) {
+        record()
+    }
+
+    func onCreate() {
         record()
     }
 }

@@ -14,24 +14,24 @@
     limitations under the License.
 */
 
-/// Protocol of an activity.
-protocol ActivityProtocol: FrameProtocol {
-    /// Creates the content tree and stores it in the activity.
-    func mountContent()
-
-    /// Fired when the activity is created, just before drawing its first frame.
-    var creationEvent: Event<Void> { get }
+/// An activity corresponds to a "screen" the user can enter and exit.
+/// An application is made of a stack of activity.
+public protocol Activity: AnyObject {
+    /// Run for one frame.
+    func frame(canvas: Canvas)
 
     /// Resize the activity content to given dimensions.
     func resizeToFit(width: Float, height: Float)
+
+    /// Called when the activity is created for the first time and fully operational:
+    /// content has been mounted, activity is on the stack and must be considered visible
+    /// to the user.
+    func onCreate()
 }
 
-/// An activity corresponds to a "screen" the user can enter and exit.
-/// An application is made of a stack of activity.
-///
-/// Each activity contains one top-level view. You can define it by redefining
-/// the content property.
-open class Activity: ActivityProtocol {
+/// Activitiy containing one top-level view.
+/// You can define it by redefining the content property.
+open class ContentActivity: Activity {
     /// The top-level view of that activity.
     open var content: View {
         EmptyView()
@@ -39,47 +39,45 @@ open class Activity: ActivityProtocol {
 
     var mountedContent: View? = nil
 
-    let creationEvent = Event<Void>()
-
     public init() {
-        // Observe our own creation event
-        self.creationEvent.observe(owner: self) {
-            self.onCreate()
-        }
+        // Mount content
+        self.mountedContent = self.content
+
+        // Call creation "event"
+        self.onCreate()
     }
 
     /// Runs the activity for one frame.
     public func frame(canvas: Canvas) {
         // Draw the mounted view.
-        if let mountedView = self.mountedContent {
-            mountedView.frame(canvas: canvas)
+        if let mountedContent = self.mountedContent {
+            mountedContent.frame(canvas: canvas)
         }
     }
 
-    /// Executed once when the activity is created.
-    open func onCreate() {}
-
-    func mountContent() {
-        // Never mount content twice
-        if self.mountedContent != nil {
-            Logger.error("Cannot mount activity content twice")
-            fatalError()
-        }
-
-        self.mountedContent = self.content
-    }
-
-    func resizeToFit(width: Float, height: Float) {
+    public func resizeToFit(width: Float, height: Float) {
         if let mountedContent = self.mountedContent {
             mountedContent.width(width.dip)
             mountedContent.height(height.dip)
         }
     }
+
+    open func onCreate() {
+        // Nothing to do
+    }
 }
 
 /// An empty activity.
 class EmptyActivity: Activity {
-    override var content: View {
-        EmptyView()
+    func resizeToFit(width: Float, height: Float) {
+        // Nothing to do
+    }
+
+    func frame(canvas: Canvas) {
+        // Nothing to do
+    }
+
+    func onCreate() {
+        // Nothing to do
     }
 }

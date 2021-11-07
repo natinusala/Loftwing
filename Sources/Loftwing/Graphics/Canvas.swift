@@ -16,7 +16,7 @@
 
 import Skia
 
-/// A canvas is the handle used to draw everything onscreen.*
+/// A canvas is the handle used to draw everything onscreen.
 public protocol Canvas {
     /// Draws the given paint on the whole canvas.
     func drawPaint(_ paint: Paint)

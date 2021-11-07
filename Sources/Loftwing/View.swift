@@ -56,7 +56,7 @@ public typealias ViewMeasureFunc = (Float, ViewMeasureMode, Float, ViewMeasureMo
 
 /// A view is the basic building block of an application's UI.
 /// The whole UI is made of a tree of views.
-open class View: FrameProtocol {
+open class View {
     let ygNode: YGNodeRef
 
     /// The measure function to use for this view.

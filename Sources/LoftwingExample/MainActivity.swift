@@ -18,7 +18,7 @@ import Loftwing
 
 // This is the first activity to be pushed when the application
 // starts.
-class MainActivity: Activity {
+class MainActivity: ContentActivity {
     override var content: View {
         Box(.row) {
             Rectangle(color: Color.red)
@@ -32,9 +32,8 @@ class MainActivity: Activity {
         }
     }
 
-    // This method is executed when the activity is created and pushed onto
-    // the stack. It does not mean it's visible yet, but it soon will be.
-    override public func onCreate() {
+    /// Called when the activity is initialized and ready to be used.
+    override func onCreate() {
         Logger.info("Example activity created")
     }
 }
