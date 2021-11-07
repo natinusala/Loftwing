@@ -22,4 +22,5 @@ import Quick
 QCKMain([
     // Add every spec class below
     ActivitiesStackSpec.self,
+    ColorSpec.self,
 ])

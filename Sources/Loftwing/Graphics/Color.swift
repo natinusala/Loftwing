@@ -16,6 +16,7 @@
 
 /// An ARGB color.
 public struct Color {
+    /// ARGB value.
     public let value: UInt32
 
     /// Creates a color with given RGB values. Alpha will be set to 255 (fully opaque).
