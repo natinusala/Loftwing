@@ -88,7 +88,7 @@ public class GPUTexture: ImageSource {
             throw GPUTextureError.unableToCreateSkiaTexture
         }
 
-        if !gr_backendtexture_is_valid(self.skiaTexture) {
+        if !skia.backendTextureIsValid(self.skiaTexture) {
             throw GPUTextureError.invalidTexture
         }
 
@@ -97,7 +97,7 @@ public class GPUTexture: ImageSource {
         }
 
         // Create a new Skia image
-        self.skImage = sk_image_new_from_texture(
+        self.skImage = skia.imageNewFromTexture(
             context,
             self.skiaTexture,
             origin.skOrigin,
@@ -115,7 +115,7 @@ public class GPUTexture: ImageSource {
         Logger.debug(debugGraphics, "Created a new \(pixelFormat) texture of \(width)x\(height)")
     }
 
-    private func createGl(
+    func createGl(
         width: Float,
         height: Float
     ) throws {
@@ -147,7 +147,7 @@ public class GPUTexture: ImageSource {
 
     deinit {
         if self.skiaTexture != nil {
-            gr_backendtexture_delete(self.skiaTexture) // TODO: does that also release the gl texture? probably not
+            skia.backendTextureDelete(self.skiaTexture) // TODO: does that also release the gl texture? probably not
         }
     }
 }

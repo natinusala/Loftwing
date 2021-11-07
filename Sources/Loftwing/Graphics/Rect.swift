@@ -17,7 +17,7 @@
 import Skia
 
 /// A rectangle.
-public struct Rect {
+public struct Rect: Equatable {
     public var x: Float {
         didSet {
             self.updateSkRect()
@@ -52,5 +52,11 @@ public struct Rect {
 
     mutating func updateSkRect() {
         self.skRect = sk_rect_t(left: x, top: y, right: x + width, bottom: y + height)
+    }
+}
+
+extension sk_rect_t: Equatable {
+    public static func == (lhs: sk_rect_t, rhs: sk_rect_t) -> Bool {
+        return lhs.top == rhs.top && rhs.bottom == lhs.bottom && rhs.left == lhs.left && rhs.right == lhs.right
     }
 }

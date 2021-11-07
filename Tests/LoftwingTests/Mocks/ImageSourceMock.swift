@@ -14,14 +14,18 @@
     limitations under the License.
 */
 
-import XCTest
-import Quick
+import Impostor
 
-@testable import LoftwingTests
+@testable import Loftwing
 
-QCKMain([
-    // Add every spec class below
-    ActivitiesStackSpec.self,
-    ColorSpec.self,
-    ImageSourceSpec.self,
-])
+class GPUTextureMock: GPUTexture {
+    let mock = Mock<GPUTexture>()
+
+    override func createGl(
+        width: Float,
+        height: Float
+    ) throws {
+        mock.record(args: [width, height])
+        self.skiaTexture = OpaquePointer(bitPattern: 1234)
+    }
+}
