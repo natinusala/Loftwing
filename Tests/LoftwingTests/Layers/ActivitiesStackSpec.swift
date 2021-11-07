@@ -29,6 +29,8 @@ class ActivitiesStackSpec: QuickSpec {
             }
 
             it("contains activities") {
+                expect(stack).to(beEmpty())
+
                 let activities = [
                     ActivityMock(),
                     ActivityMock(),
@@ -45,6 +47,8 @@ class ActivitiesStackSpec: QuickSpec {
             }
 
             it("contains 1 activity") {
+                expect(stack).to(beEmpty())
+
                 let activity = ActivityMock()
 
                 stack.push(activity: activity)
@@ -54,6 +58,37 @@ class ActivitiesStackSpec: QuickSpec {
 
             it("contains no activities") {
                 expect(stack).to(beEmpty())
+            }
+        }
+
+        describe("an activities stack layer") {
+            var layer: ActivitiesStackLayer!
+
+            beforeEach {
+                layer = ActivitiesStackLayer()
+            }
+
+            it("draws activities") {
+                let activity = ActivityMock()
+                let canvas = CanvasMock()
+
+                layer.push(activity: activity)
+                layer.frame(canvas: canvas)
+
+                activity.expect { a in
+                    a.frame(canvas: canvas)
+                }
+            }
+
+            it("resizes activities") {
+                let activity = ActivityMock()
+
+                layer.push(activity: activity)
+                layer.resizeToFit(width: 800, height: 600)
+
+                activity.expect { a in
+                    a.resizeToFit(width: 800, height: 600)
+                }
             }
         }
     }

@@ -25,14 +25,7 @@ import CLoftwing
 /// To use, create a struct that conforms to that protocol and add the `@main`
 /// attribute.
 open class Application {
-    let creationEvent = Event<Void>()
-
-    required public init() {
-        // Observe our own creation event
-        self.creationEvent.observe(owner: self) {
-            self.onCreate()
-        }
-    }
+    required public init() {}
 
     /// Application title.
     open var title: String {
@@ -100,7 +93,7 @@ open class InternalApplication: Context {
     public var window: Window
     var platform: Platform
 
-    var shouldStop = false
+    var exitRequested = false
     var stopCallback: (() -> ())? = nil
 
     let activitiesStackLayer = ActivitiesStackLayer()
@@ -119,7 +112,7 @@ open class InternalApplication: Context {
         self.clearPaint = Paint(color: Color.black)
 
         // Initialize platform
-        self.platform = try createPlatform(
+        self.platform = try platformCreator.createPlatform(
             initialWindowMode: configuration.initialWindowMode,
             initialGraphicsAPI: try configuration.initialGraphicsAPI ?? GraphicsAPI.findFirstAvailable(),
             initialTitle: configuration.title,
@@ -166,7 +159,7 @@ open class InternalApplication: Context {
         }
 
         // Fire the creation event when everything is ready
-        self.configuration.creationEvent.fire()
+        self.configuration.onCreate()
     }
 
     var frameTime: Double {
@@ -175,18 +168,6 @@ open class InternalApplication: Context {
 
     /// Executed every frame.
     func frame() {
-        // Poll platform, see if we should exit
-        // TODO: handle ctrlc to gracefully exit
-        if self.platform.poll() || self.shouldStop {
-            // Exit
-            Logger.info("Exiting...")
-
-            self.onExit()
-
-            // Exit
-            Foundation.exit(0)
-        }
-
         // Clear in black
         self.window.canvas!.drawPaint(self.clearPaint)
 
@@ -205,15 +186,58 @@ open class InternalApplication: Context {
 
     /// Requests the application to be exited.
     public func exit() {
-        self.shouldStop = true
+        self.exitRequested = true
     }
 
     /// Called when the app exits.
     open func onExit() {
         // Nothing by default
     }
-}
 
+    /// Returns `true` if the app should exit.
+    func shouldExit() -> Bool {
+        return self.platform.poll() || self.exitRequested
+    }
+
+    /// Runs the app.
+    public func run() {
+        while true {
+            // Poll platform, see if we should exit
+            // TODO: handle ctrlc to gracefully exit
+            if self.shouldExit() {
+                // Exit
+                Logger.info("Exiting...")
+                self.onExit()
+                break
+            }
+
+            let beginFrameTime = Date()
+
+            // Run one frame
+            self.frame()
+
+            // Consume main queue (events, background tasks completion handlers...)
+            drainMainQueue()
+
+            // Sleep for however much time is needed
+            if self.frameTime > 0 {
+                let endFrameTime = Date()
+                let currentFrameTime = beginFrameTime.distance(to: endFrameTime)
+                var sleepAmount: TimeInterval = 0
+
+                // Only sleep if the frame took less time to render
+                // than desired frame time
+                if currentFrameTime < self.frameTime {
+                    sleepAmount = self.frameTime - currentFrameTime
+                }
+
+                if sleepAmount > 0 {
+                    Thread.sleep(forTimeInterval: sleepAmount)
+                }
+            }
+        }
+    }
+}
 
 /// Responsible for running "tickings" every frame as well as managing their
 /// lifecycle.
@@ -300,38 +324,12 @@ extension Application {
     /// use it in your executable target. Calling it manually is not supported.
     public static func main() throws {
         let app = try InternalApplication(with: self.init())
-
-        while true {
-            let beginFrameTime = Date()
-
-            // Run one app frame
-            app.frame()
-
-            // Consume main queue (events, background tasks completion handlers...)
-            drainMainQueue()
-
-            // Sleep for however much time is needed
-            if app.frameTime > 0 {
-                let endFrameTime = Date()
-                let currentFrameTime = beginFrameTime.distance(to: endFrameTime)
-                var sleepAmount: TimeInterval = 0
-
-                // Only sleep if the frame took less time to render
-                // than desired frame time
-                if currentFrameTime < app.frameTime {
-                    sleepAmount = app.frameTime - currentFrameTime
-                }
-
-                if sleepAmount > 0 {
-                    Thread.sleep(forTimeInterval: sleepAmount)
-                }
-            }
-        }
+        app.run()
     }
 }
 
 /// Runs everything in the main queue.
-private func drainMainQueue() {
+func drainMainQueue() {
     // XXX: Dispatch does not expose a way to drain the main queue
     // without parking the main thread, so we need to use obscure
     // CoreFoundation / Cocoa functions.

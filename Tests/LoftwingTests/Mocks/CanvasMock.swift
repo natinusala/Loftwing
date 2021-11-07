@@ -18,23 +18,32 @@ import Impostor
 
 @testable import Loftwing
 
-class GPUTextureMock: GPUTexture {
-    let mock = Mock<GPUTexture>()
-
-    override func createGl(
-        width: Float,
-        height: Float
-    ) throws {
-        mock.record(args: [width, height])
-        self.skiaTexture = OpaquePointer(bitPattern: 1234)
+class CanvasMock: Mock<Canvas>, Canvas {
+    func drawPaint(_ paint: Paint) {
+        record(args: [paint])
     }
-}
 
-class ImageSourceMock: Mock<ImageSource>, ImageSource {
-    let skImage = OpaquePointer(bitPattern: 1234)
+    func drawRect(
+        _ rect: Rect,
+        paint: Paint
+    ) {
+        record(args: [rect, paint])
+    }
 
-    let width: Float = 800
-    let height: Float = 600
+    func drawImage(
+        _ image: ImageSource,
+        x: Float,
+        y: Float,
+        paint: Paint?
+    ) {
+        record(args: [image, x, y, paint])
+    }
 
-    let drawRect = Rect(x: 100, y: 100, width: 200, height: 200)
+    func drawImage(
+        _ image: ImageSource,
+        destRect: Rect,
+        paint: Paint?
+    ) {
+        record(args: [image, destRect, paint])
+    }
 }

@@ -17,35 +17,66 @@
 import Foundation
 import XCTest
 
+enum MockState {
+    /// Every call to a mocked method is recorded.
+    case recording
+
+    /// Every call to a mocked method will fail the running test
+    /// if a similar call has not been recorded before.
+    case expectations
+
+    /// Every call to a mocked method is controlled to see if
+    /// a similar call has been recorded before. The `failedControl`
+    /// property will be set to any mismatched call.
+    case control
+}
+
 /// Allows to mock a protocol given in generic parameter.
 open class Mock<Mocked> {
     /// Holds records of all calls for all functions.
     var calls: [String: [Call]] = [:]
 
     /// Are we inside an `expect(expectations:)` call?
-    var expectationsMode = false
+    var state: MockState = .recording
+
+    var failedControl: String? = nil
 
     public init() {}
 
     /// Records a call of the function name with given parameters.
     public func record(_ funcName: String = #function, args: [Any?] = []) {
-        if self.expectationsMode {
-            // Expectations mode: ensure that the given call exists and has the
-            // correct parameters
-            if let callsForThatFunction = self.calls[funcName] {
-                if !callsForThatFunction.contains(Call(args: args)) {
-                    XCTFail("\(funcName) call with parameters \(makeSummary(for: args)) not found")
+        switch self.state {
+            case .recording:
+                if var callsForThatFunction = self.calls[funcName] {
+                    callsForThatFunction.append(Call(args: args))
+                } else {
+                    self.calls[funcName] = [Call(args: args)]
                 }
-            } else {
-                XCTFail("\(funcName) not called (was expected to be called with parameters \(makeSummary(for: args)))")
-            }
-        } else {
-            // Normal mode: record call
-            if var callsForThatFunction = self.calls[funcName] {
-                callsForThatFunction.append(Call(args: args))
-            } else {
-                self.calls[funcName] = [Call(args: args)]
-            }
+            case .expectations:
+                // Expectations mode: ensure that the given call exists and has the
+                // correct parameters
+                if let callsForThatFunction = self.calls[funcName] {
+                    if !callsForThatFunction.contains(Call(args: args)) {
+                        XCTFail("\(funcName) call with parameters \(makeSummary(for: args)) not found")
+                    }
+                } else {
+                    XCTFail("\(funcName) not called (was expected to be called with parameters \(makeSummary(for: args)))")
+                }
+            case .control:
+                // Control mode: see if the call is in the list, if it's not, set
+                // the `failedControl` property
+                // Don't do anything if control failed already
+                if self.failedControl != nil {
+                    return
+                }
+
+                if let callsForThatFunction = self.calls[funcName] {
+                    if !callsForThatFunction.contains(Call(args: args)) {
+                        self.failedControl = "\(funcName) call with parameters \(makeSummary(for: args)) not found"
+                    }
+                } else {
+                    self.failedControl = "\(funcName) not called (was expected to be called with parameters \(makeSummary(for: args)))"
+                }
         }
     }
 
@@ -63,9 +94,21 @@ open class Mock<Mocked> {
     /// Allows to assert that mocked methods are called with the appropriate
     /// parameters. To be used when the mock does inherit from the mocked protocol.
     public func expectWithInstance(_ instance: Mocked, expectations: (Mocked) -> ()) {
-        self.expectationsMode = true
+        self.state = .expectations
         expectations(instance)
-        self.expectationsMode = false
+        self.state = .recording
+    }
+
+    /// Returns `true` if all calls in the expectations block were found.
+    public func hasCallsWithInstance(_ instance: Mocked, expectations: (Mocked) -> ()) -> Bool {
+        self.state = .control
+        self.failedControl = nil
+
+        expectations(instance)
+
+        self.state = .recording
+
+        return self.failedControl == nil
     }
 }
 

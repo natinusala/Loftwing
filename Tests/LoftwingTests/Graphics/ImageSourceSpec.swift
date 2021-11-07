@@ -23,7 +23,7 @@ class ImageSourceSpec: QuickSpec {
     override func spec() {
         describe("a GPU texture image source") {
             it("creates a Skia image") {
-                try withContext(graphicsAPI: .gl) {
+                try withApp(graphicsAPI: .gl) { _ in
                     let texture = try GPUTextureMock(width: 800, height: 600, pixelFormat: .rgb565)
 
                     expect(texture.skImage).toNot(beNil())
@@ -32,7 +32,7 @@ class ImageSourceSpec: QuickSpec {
 
             context("when the draw rect is unspecified") {
                 it("has a draw rect with full image dimensions") {
-                    try withContext(graphicsAPI: .gl) {
+                    try withApp(graphicsAPI: .gl) { _ in
                         let texture = try GPUTextureMock(width: 800, height: 600, pixelFormat: .rgb565)
 
                         expect(texture.drawRect).to(equal(Rect(x: 0, y: 0, width: 800, height: 600)))
@@ -44,25 +44,27 @@ class ImageSourceSpec: QuickSpec {
 
             context("when the draw rect is specified") {
                 it("has a draw rect") {
-                    try withContext(graphicsAPI: .gl) {
+                    try withApp(graphicsAPI: .gl) { _ in
                         let texture = try GPUTextureMock(
                             width: 800,
                             height: 600,
                             pixelFormat: .rgb565,
                             drawRect: Rect(x: 100, y: 100, width: 200, height: 200)
                         )
+
                         expect(texture.drawRect).to(equal(Rect(x: 100, y: 100, width: 200, height: 200)))
                     }
                 }
 
                 it("has draw rect dimensions") {
-                    try withContext(graphicsAPI: .gl) {
+                    try withApp(graphicsAPI: .gl) { _ in
                         let texture = try GPUTextureMock(
                             width: 800,
                             height: 600,
                             pixelFormat: .rgb565,
                             drawRect: Rect(x: 100, y: 100, width: 200, height: 200)
                         )
+
                         expect(texture.width).to(equal(200))
                         expect(texture.height).to(equal(200))
                     }

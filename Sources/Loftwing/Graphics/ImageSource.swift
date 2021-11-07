@@ -18,7 +18,7 @@ import Skia
 import Glad
 
 /// Represents a source for an image.
-public protocol ImageSource {
+public protocol ImageSource: AnyObject {
     /// Pointer to the native Skia image.
     var skImage: OpaquePointer? { get }
 
@@ -73,6 +73,7 @@ public class GPUTexture: ImageSource {
 
         // In the case of a GPU texture, the width and height of the Skia image
         // should be the same as the input rect
+        // XXX: this only works if x, y == 0 -> change to self.drawRect.width - self.drawRect.x...
         self.width = self.drawRect.width
         self.height = self.drawRect.height
 

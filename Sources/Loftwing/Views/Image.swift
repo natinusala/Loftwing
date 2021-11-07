@@ -15,7 +15,6 @@
 */
 
 import Foundation
-import Skia
 
 /// Different image scaling modes.
 public enum ScalingMode {
@@ -80,8 +79,6 @@ public class Image: View, BindableView {
             self.paint.setFilteringQuality(self.sampling.filteringQuality)
         }
     }
-
-    var blackPaint: Paint? = nil
 
     /// Creates a new Image with no source (yet). If `resizeViewToFitImage` is set to `true`,
     /// the view bounds will be resized to fit the image as best as possible.

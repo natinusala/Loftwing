@@ -24,4 +24,5 @@ QCKMain([
     ActivitiesStackSpec.self,
     ColorSpec.self,
     ImageSourceSpec.self,
+    ImageSpec.self,
 ])

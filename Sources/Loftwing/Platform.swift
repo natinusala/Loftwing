@@ -22,21 +22,36 @@ public enum SkiaError: Error {
     case cannotInitSkiaCanvas
 }
 
-/// Selects and creates the platform to use for an application.
-func createPlatform(
-    initialWindowMode windowMode: WindowMode,
-    initialGraphicsAPI graphicsAPI: GraphicsAPI,
-    initialTitle title: String,
-    resetContext: Bool
-) throws -> Platform {
-    // TODO: only return GLFW if it's actually supported
-    return try GLFWPlatform(
-        initialWindowMode: windowMode,
-        initialGraphicsAPI: graphicsAPI,
-        initialTitle: title,
-        resetContext: resetContext
-    )
+protocol PlatformCreator {
+    /// Selects and creates the platform to use for an application.
+    func createPlatform(
+        initialWindowMode windowMode: WindowMode,
+        initialGraphicsAPI graphicsAPI: GraphicsAPI,
+        initialTitle title: String,
+        resetContext: Bool
+    ) throws -> Platform
 }
+
+class RealPlatformCreator: PlatformCreator {
+    func createPlatform(
+        initialWindowMode windowMode: WindowMode,
+        initialGraphicsAPI graphicsAPI: GraphicsAPI,
+        initialTitle title: String,
+        resetContext: Bool
+    ) throws -> Platform {
+        // TODO: only return GLFW if it's actually supported
+        return try GLFWPlatform(
+            initialWindowMode: windowMode,
+            initialGraphicsAPI: graphicsAPI,
+            initialTitle: title,
+            resetContext: resetContext
+        )
+    }
+}
+
+/// Can be called to create the currently running platform handle.
+/// Test targets override this mock of their own.
+var platformCreator: PlatformCreator = RealPlatformCreator()
 
 /// Protocol representing a platform a Loftwing app can run on.
 /// Each platform can implement one or more graphics context.
