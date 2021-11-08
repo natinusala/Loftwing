@@ -64,7 +64,7 @@ open class View {
         nil
     }
 
-    var parent: View? = nil {
+    var parent: View? {
         willSet(newParent) {
             if self.parent != nil {
                 fatalError("Cannot attach a view to multiple parents")

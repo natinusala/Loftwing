@@ -24,8 +24,140 @@ import CLoftwing
 ///
 /// To use, create a struct that conforms to that protocol and add the `@main`
 /// attribute.
-open class Application {
-    required public init() {}
+open class Application: Context {
+    let clearPaint = Paint(color: Color.black)
+
+    var platform: Platform?
+
+    public let runner = Runner()
+
+    let activitiesStackLayer = ActivitiesStackLayer()
+    var layers: [Layer] = []
+
+    var exitRequested = false
+
+    public var window: Window? {
+        return self.platform?.window
+    }
+
+    public var colorSpace: OpaquePointer? {
+        return self.window?.colorSpace
+    }
+
+    public var skContext: OpaquePointer? {
+        return self.window?.skContext
+    }
+
+    public required init() throws {
+        // Initialize platform
+        self.platform = try platformCreator.createPlatform(
+            initialWindowMode: self.initialWindowMode,
+            initialGraphicsAPI: self.graphicsAPI,
+            initialTitle: self.title,
+            resetContext: self.resetGraphicsContextOnFrame
+        )
+
+        // Create layers
+        self.layers = [
+            self.activitiesStackLayer
+            // TODO: OverlayLayer, which is a subclass of ViewLayer
+        ]
+
+        // Insert content layer
+        if let contentLayer = self.contentLayer {
+            self.layers.insert(contentLayer, at: 0)
+        }
+
+        // Register ourself as the running context
+        contextSharedInstance = self
+
+        // Push main activity
+        self.activitiesStackLayer.push(activity: self.mainActivity)
+
+        // Resize every layer
+        if let window = self.window {
+            for layer in self.layers {
+                layer.resizeToFit(width: window.width, height: window.height)
+            }
+        }
+
+        // Fire the creation event when everything is ready
+        self.onCreate()
+    }
+
+    /// Executed every frame.
+    func frame() {
+        if let window = self.window {
+            // Clear in black
+            window.canvas.drawPaint(self.clearPaint)
+
+            // Draw layers
+            for layer in self.layers {
+                // TODO: saveLayer and restore?
+                layer.frame(canvas: window.canvas)
+            }
+
+            // Swap buffers
+            window.swapBuffers()
+        }
+
+        // Run runner for one frame
+        self.runner.frame()
+    }
+
+    /// Runs the app.
+    public func run() {
+        while true {
+            // Poll platform, see if we should exit
+            // TODO: handle ctrlc to gracefully exit
+            if self.shouldExit() {
+                // Exit
+                Logger.info("Exiting...")
+                self.onExit()
+                break
+            }
+
+            let beginFrameTime = Date()
+
+            // Run one frame
+            self.frame()
+
+            // Consume main queue (events, background tasks completion handlers...)
+            drainMainQueue()
+
+            // Sleep for however much time is needed
+            if self.frameTime > 0 {
+                let endFrameTime = Date()
+                let currentFrameTime = beginFrameTime.distance(to: endFrameTime)
+                var sleepAmount: TimeInterval = 0
+
+                // Only sleep if the frame took less time to render
+                // than desired frame time
+                if currentFrameTime < self.frameTime {
+                    sleepAmount = self.frameTime - currentFrameTime
+                }
+
+                if sleepAmount > 0 {
+                    Thread.sleep(forTimeInterval: sleepAmount)
+                }
+            }
+        }
+    }
+
+    /// Requests the application to be exited.
+    public func exit() {
+        self.exitRequested = true
+    }
+
+    /// Called when the app exits.
+    open func onExit() {
+        // Nothing by default
+    }
+
+    /// Returns `true` if the app should exit.
+    func shouldExit() -> Bool {
+        return (self.platform?.poll() ?? false) || self.exitRequested
+    }
 
     /// Application title.
     open var title: String {
@@ -37,10 +169,9 @@ open class Application {
         .borderlessWindow
     }
 
-    /// Initial graphics context. Use nil to autodetect and pick the
-    /// first one that works.
-    open var initialGraphicsAPI: GraphicsAPI? {
-        nil
+    /// Initial graphics context.
+    open var graphicsAPI: GraphicsAPI {
+        return GraphicsAPI.findFirstAvailable()
     }
 
     /// The first activity started by the application.
@@ -83,160 +214,7 @@ public protocol Context {
     var colorSpace: OpaquePointer? { get }
     var graphicsAPI: GraphicsAPI { get }
     var skContext: OpaquePointer? { get }
-    var window: Window { get }
-}
-
-/// Internal application singleton.
-open class InternalApplication: Context {
-    let configuration: Application
-
-    public var window: Window
-    var platform: Platform
-
-    var exitRequested = false
-    var stopCallback: (() -> ())? = nil
-
-    let activitiesStackLayer = ActivitiesStackLayer()
-    var layers: [Layer] = []
-
-    let clearPaint: Paint
-
-    public var runner = Runner()
-    public var colorSpace: OpaquePointer?
-    public var graphicsAPI: GraphicsAPI
-    public var skContext: OpaquePointer?
-
-    /// Creates an application.
-    init(with configuration: Application) throws {
-        self.configuration = configuration
-        self.clearPaint = Paint(color: Color.black)
-
-        // Initialize platform
-        self.platform = try platformCreator.createPlatform(
-            initialWindowMode: configuration.initialWindowMode,
-            initialGraphicsAPI: try configuration.initialGraphicsAPI ?? GraphicsAPI.findFirstAvailable(),
-            initialTitle: configuration.title,
-            resetContext: configuration.resetGraphicsContextOnFrame
-        )
-
-        // Create window
-        self.window = self.platform.window
-
-        // Set context properties
-        self.graphicsAPI = window.graphicsAPI
-
-        // Create layers
-        self.layers = [
-            self.activitiesStackLayer
-            // TODO: OverlayLayer, which is a subclass of ViewLayer
-        ]
-
-        if let contentLayer = configuration.contentLayer {
-            self.layers.insert(contentLayer, at: 0)
-        }
-
-        // Register ourself as the running context
-        contextSharedInstance = self
-
-        // Load window
-        try self.window.reload()
-
-        //Refresh context
-        self.skContext = window.skContext
-        self.colorSpace = window.colorSpace
-
-        // Ensure the window has a Skia canvas
-        if self.window.canvas == nil {
-            throw WindowCreationError.noSkiaCanvas
-        }
-
-        // Push main activity
-        self.activitiesStackLayer.push(activity: self.configuration.mainActivity)
-
-        // Resize every layer
-        for layer in self.layers {
-            layer.resizeToFit(width: window.width, height: window.height)
-        }
-
-        // Fire the creation event when everything is ready
-        self.configuration.onCreate()
-    }
-
-    var frameTime: Double {
-        return self.configuration.frameTime
-    }
-
-    /// Executed every frame.
-    func frame() {
-        // Clear in black
-        self.window.canvas!.drawPaint(self.clearPaint)
-
-        // Draw layers
-        for layer in self.layers {
-            // TODO: saveLayer and restore?
-            layer.frame(canvas: self.window.canvas!)
-        }
-
-        // Swap buffers
-        self.window.swapBuffers()
-
-        // Run runner for one frame
-        self.runner.frame()
-    }
-
-    /// Requests the application to be exited.
-    public func exit() {
-        self.exitRequested = true
-    }
-
-    /// Called when the app exits.
-    open func onExit() {
-        // Nothing by default
-    }
-
-    /// Returns `true` if the app should exit.
-    func shouldExit() -> Bool {
-        return self.platform.poll() || self.exitRequested
-    }
-
-    /// Runs the app.
-    public func run() {
-        while true {
-            // Poll platform, see if we should exit
-            // TODO: handle ctrlc to gracefully exit
-            if self.shouldExit() {
-                // Exit
-                Logger.info("Exiting...")
-                self.onExit()
-                break
-            }
-
-            let beginFrameTime = Date()
-
-            // Run one frame
-            self.frame()
-
-            // Consume main queue (events, background tasks completion handlers...)
-            drainMainQueue()
-
-            // Sleep for however much time is needed
-            if self.frameTime > 0 {
-                let endFrameTime = Date()
-                let currentFrameTime = beginFrameTime.distance(to: endFrameTime)
-                var sleepAmount: TimeInterval = 0
-
-                // Only sleep if the frame took less time to render
-                // than desired frame time
-                if currentFrameTime < self.frameTime {
-                    sleepAmount = self.frameTime - currentFrameTime
-                }
-
-                if sleepAmount > 0 {
-                    Thread.sleep(forTimeInterval: sleepAmount)
-                }
-            }
-        }
-    }
+    var window: Window? { get }
 }
 
 /// Responsible for running "tickings" every frame as well as managing their
@@ -323,7 +301,7 @@ extension Application {
     /// Main entry point of an application. Use the `@main` attribute to
     /// use it in your executable target. Calling it manually is not supported.
     public static func main() throws {
-        let app = try InternalApplication(with: self.init())
+        let app = try self.init()
         app.run()
     }
 }

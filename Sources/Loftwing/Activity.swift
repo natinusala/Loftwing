@@ -37,7 +37,7 @@ open class ContentActivity: Activity {
         EmptyView()
     }
 
-    var mountedContent: View? = nil
+    var mountedContent: View?
 
     public init() {
         // Mount content

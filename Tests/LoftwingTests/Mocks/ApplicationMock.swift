@@ -42,24 +42,7 @@ func withApp(graphicsAPI: GraphicsAPI = .gl, test: (ApplicationMock) throws -> (
     platformCreator = RealPlatformCreator()
 }
 
-class ApplicationConfigurationMock: Application {
-    let graphicsAPI: GraphicsAPI
-
-    override var initialGraphicsAPI: GraphicsAPI? {
-        self.graphicsAPI
-    }
-
-    required public init(graphicsAPI: GraphicsAPI = .gl) {
-        self.graphicsAPI = graphicsAPI
-        super.init()
-    }
-
-    required public init() {
-        fatalError("ApplicationConfigurationMock.init() should not be called directly")
-    }
-}
-
-class ApplicationMock: InternalApplication {
+class ApplicationMock: Application {
     typealias Predicate = () -> Bool
 
     var runFor: UInt = 0
@@ -67,9 +50,20 @@ class ApplicationMock: InternalApplication {
     var predicate: Predicate = { return false }
     var predicateFulfilled = false
 
-    convenience init(graphicsAPI: GraphicsAPI) throws {
-        let configuration = ApplicationConfigurationMock(graphicsAPI: graphicsAPI)
-        try self.init(with: configuration)
+    let _graphicsAPI: GraphicsAPI
+
+    override var graphicsAPI: GraphicsAPI {
+        return self._graphicsAPI
+    }
+
+    init(graphicsAPI: GraphicsAPI) throws {
+        self._graphicsAPI = graphicsAPI
+
+        try super.init()
+    }
+
+    required init() throws {
+        fatalError("ApplicationMock.init() must not be called directly")
     }
 
     override func shouldExit() -> Bool {
@@ -112,7 +106,7 @@ class PlatformMock: Mock<Platform>, Platform {
         self.window = WindowMock(graphicsAPI: graphicsAPI)
     }
 
-    let window: Window
+    let window: Window?
 
     func poll() -> Bool {
         record()
@@ -137,11 +131,11 @@ class MockPlatformCreator: PlatformCreator {
 }
 
 class WindowMock: Mock<Window>, Window {
-    let canvas: Canvas? = CanvasMock()
+    let canvas: Canvas = CanvasMock()
     let width: Float = 1280
     let height: Float = 720
 
-    let colorSpace: OpaquePointer? = nil
+    let colorSpace: OpaquePointer? = OpaquePointer(bitPattern: 1234)
     let skContext = OpaquePointer(bitPattern: 1234)
 
     let graphicsAPI: GraphicsAPI
@@ -174,9 +168,9 @@ class WindowMock: Mock<Window>, Window {
 
 class ContextMock: Context {
     let runner = Runner()
-    let window: Window
+    let window: Window?
 
-    let colorSpace: OpaquePointer? = nil
+    let colorSpace = OpaquePointer(bitPattern: 1234)
     let skContext = OpaquePointer(bitPattern: 1234)
 
     let graphicsAPI: GraphicsAPI

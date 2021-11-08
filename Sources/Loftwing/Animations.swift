@@ -85,7 +85,7 @@ public class Animation {
     var value: Float
 
     /// The ticking of the currently running animation, if any.
-    weak var currentTicking: AnimationTicking? = nil
+    weak var currentTicking: AnimationTicking?
 
     /// Callback to be executed when the animation is completed.
     var completionCallback: AnimationCompletionCallback = {}
@@ -178,7 +178,7 @@ public class Animation {
 /// A ticking created when an animation is (re) started.
 class AnimationTicking: Ticking {
     /// Bound Animation.
-    weak var animation: Animation? = nil
+    weak var animation: Animation?
 
     /// Is the animation finished?
     var finished: Bool = false

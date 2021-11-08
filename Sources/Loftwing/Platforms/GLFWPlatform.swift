@@ -34,7 +34,7 @@ let enableSRGB = false
 class GLFWPlatform: Platform {
     let glfwWindow: GLFWWindow
 
-    var window: Window {
+    var window: Window? {
         return self.glfwWindow
     }
 
@@ -54,7 +54,7 @@ class GLFWPlatform: Platform {
             throw GLFWError.initFailed
         }
 
-        // Create the window
+        // Create the initial window
         self.glfwWindow = try GLFWWindow(
             initialWindowMode: windowMode,
             initialGraphicsAPI: graphicsAPI,
@@ -75,14 +75,14 @@ class GLFWWindow: Window {
     let graphicsAPI: GraphicsAPI
     let title: String
 
-    var window: OpaquePointer? = nil // GLFW window
+    let window: OpaquePointer? // GLFW window
 
-    var canvas: Canvas? = nil // Skia canvas
-    var skContext: OpaquePointer? = nil // Skia context
-    var colorSpace: OpaquePointer? = nil
+    let canvas: Canvas // Skia canvas
+    let skContext: OpaquePointer? // Skia context
+    let colorSpace: OpaquePointer?
 
-    var width: Float = 0
-    var height: Float = 0
+    let width: Float
+    let height: Float
 
     let resetContext: Bool
 
@@ -96,23 +96,6 @@ class GLFWWindow: Window {
         self.graphicsAPI = graphicsAPI
         self.title = title
         self.resetContext = resetContext
-    }
-
-    func swapBuffers() {
-        if self.resetContext {
-            gr_direct_context_reset_context(self.skContext, kAll_GrBackendState)
-        }
-
-        gr_direct_context_flush(self.skContext)
-        glfwSwapBuffers(self.window)
-    }
-
-    func reload() throws {
-        // TODO: teardown existing window + Skia instead of aborting
-        if self.window != nil {
-            Logger.error("Reloading not implemented on GLFW")
-            fatalError()
-        }
 
         // Setup hints
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
@@ -219,7 +202,7 @@ class GLFWWindow: Window {
         self.height = Float(finalWindowHeight)
 
         // Initialize Skia
-        var backendRenderTarget: OpaquePointer? = nil
+        var backendRenderTarget: OpaquePointer?
 
         switch self.graphicsAPI {
             case .gl:
@@ -287,6 +270,15 @@ class GLFWWindow: Window {
         }
 
         self.canvas = SkiaCanvas(nativeCanvas: nativeCanvas)
+    }
+
+    func swapBuffers() {
+        if self.resetContext {
+            gr_direct_context_reset_context(self.skContext, kAll_GrBackendState)
+        }
+
+        gr_direct_context_flush(self.skContext)
+        glfwSwapBuffers(self.window)
     }
 
     // TODO: glfwDestroyWindow + glfwTerminate, free colorspace

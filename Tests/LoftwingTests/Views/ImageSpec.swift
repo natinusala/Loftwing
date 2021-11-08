@@ -26,7 +26,7 @@ class ImageSpec: QuickSpec {
             context("when unowned source changes") {
                 it("updates source") {
                     try withApp { app in
-                        @Observable var source: ImageSource? = nil
+                        @Observable var source: ImageSource?
 
                         let image = Image(unownedSource: $source)
 
@@ -41,7 +41,7 @@ class ImageSpec: QuickSpec {
 
                 it("invalidates layout") {
                     try withApp { app in
-                        @Observable var source: ImageSource? = nil
+                        @Observable var source: ImageSource?
 
                         let image = ImageMock(unownedSource: $source)
 

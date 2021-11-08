@@ -54,7 +54,7 @@ public enum SamplingMode {
 
 /// Allows displaying an `ImageSource` using different scaling and positioning methods.
 public class Image: View, BindableView {
-    public var source: ImageSource? = nil {
+    public var source: ImageSource? {
         didSet {
             self.invalidateLayout()
         }

@@ -29,11 +29,6 @@ class ExampleApplication: Application {
         .windowed(1280, 720)
     }
 
-    // Initial graphics API, nil being "select automatically"
-    override var initialGraphicsAPI: GraphicsAPI? {
-        nil
-    }
-
     // First activity to be pushed when the app starts
     override var mainActivity: Activity {
         MainActivity()

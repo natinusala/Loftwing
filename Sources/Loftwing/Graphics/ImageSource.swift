@@ -47,9 +47,9 @@ public enum Origin {
 /// An image source backed by a GPU texture with fixed width, height and pixel format.
 /// Use the `texture` property to get the GPU texture handle.
 public class GPUTexture: ImageSource {
-    public var skImage: OpaquePointer? = nil
+    public var skImage: OpaquePointer?
 
-    public var skiaTexture: OpaquePointer? = nil
+    public var skiaTexture: OpaquePointer?
     public var texture: UInt32 = 0
 
     public let width: Float

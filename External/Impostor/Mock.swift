@@ -39,7 +39,7 @@ open class Mock<Mocked> {
     /// Are we inside an `expect(expectations:)` call?
     var state: MockState = .recording
 
-    var failedControl: String? = nil
+    var failedControl: String?
 
     public init() {}
 

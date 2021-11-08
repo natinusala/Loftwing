@@ -66,7 +66,7 @@ protocol Platform {
     ) throws
 
     /// Current window handle.
-    var window: Window { get }
+    var window: Window? { get }
 
     /// Called before every frame begins to poll events and prepare the frame.
     /// Must return true if the application should exit.
@@ -94,9 +94,9 @@ public enum GraphicsAPI {
     /// OpenGL.
     case gl
 
-    /// Selects the first available graphics API, or throws if none is
+    /// Selects the first available graphics API, or fatal errors if none is
     /// available.
-    public static func findFirstAvailable() throws -> GraphicsAPI {
+    public static func findFirstAvailable() -> GraphicsAPI {
         // TODO: only return OpenGL if it's actually available
         return .gl
     }
@@ -105,19 +105,13 @@ public enum GraphicsAPI {
 /// Represents an application window.
 public protocol Window {
     /// Graphics canvas.
-    var canvas: Canvas? { get }
+    var canvas: Canvas { get }
 
     /// Current window width.
     var width: Float { get }
 
     /// Current window height.
     var height: Float { get }
-
-    /// Loads or reloads the window. If called for the first time, will create
-    /// and open a new window. If called when a window already exists, the existing
-    /// window will be closed, all graphics resources will be released and a new window
-    /// will be created in its place (using the same configuration).
-    func reload() throws
 
     /// Called at the end of every frame
     func swapBuffers()
