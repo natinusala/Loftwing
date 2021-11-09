@@ -155,29 +155,22 @@ public class Image: View, BindableView {
                     self.imageRect = self.rect
                 // Upscale and center while keeping aspect ratio
                 case .fit:
-                    if imageSource.width >= imageSource.height {
-                        let ratio = imageSource.width / imageSource.height
+                    let sourceRatio = imageSource.width / imageSource.height
+                    let imageRatio = self.width / self.height
 
-                        let imageHeight = self.height
-                        let imageWidth = imageHeight * ratio
+                    let dimensions: (width: Float, height: Float) = imageRatio > sourceRatio ?
+                        (width: imageSource.width * self.height / imageSource.height, height: self.height) :
+                        (width: self.width, height: imageSource.height * self.width / imageSource.width)
 
-                        let xPosition = (self.width - imageWidth) / 2.0
+                    let xPosition = (self.width - dimensions.width) / 2.0
+                    let yPosition = (self.height - dimensions.height) / 2.0
 
-                        self.imageRect = Rect(x: xPosition, y: self.y, width: imageWidth, height: imageHeight)
-                    } else {
-                        let ratio = imageSource.height / imageSource.width
-
-                        let imageWidth = self.width
-                        let imageHeight = imageWidth * ratio
-
-                        let yPosition = (self.height - imageHeight) / 2.0
-
-                        self.imageRect = Rect(
-                            x: self.x,
-                            y: yPosition,
-                            width: imageWidth,
-                            height: imageHeight)
-                    }
+                    self.imageRect = Rect(
+                        x: xPosition,
+                        y: yPosition,
+                        width: dimensions.width,
+                        height: dimensions.height
+                    )
                 // Keep original size, just center
                 case .center:
                     let xPosition = (self.width - imageSource.width) / 2.0

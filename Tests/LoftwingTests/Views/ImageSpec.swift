@@ -68,21 +68,58 @@ class ImageSpec: QuickSpec {
             }
 
             context("when laying out") {
-                it("stretches the image") {
-                    let source = ImageSourceMock()
-                    let image = ImageMock(source: source)
+                let stretchParams: [(width: Float, height: Float)] = [
+                    (width: 0, height: 0),
+                    (width: 500, height: 250),
+                    (width: 800, height: 600),
+                ]
+                stretchParams.forEach { (width, height) in
+                    context("when stretching an image of size \(width)x\(height)") {
+                        it("stretches the image to \(width)x\(height)") {
+                            let image = ImageMock(source: ImageSourceMock())
 
-                    image.width(500.dip)
-                    image.height(250.dip)
-                    image.scalingMode(.stretch)
+                            image.width(width.dip)
+                            image.height(height.dip)
+                            image.scalingMode(.stretch)
 
-                    image.layout()
+                            image.layout()
 
-                    expect(image.imageRect).to(equal(Rect(x: 0, y: 0, width: 500, height: 250)))
+                            expect(image.imageRect).to(equal(Rect(x: 0, y: 0, width: width, height: height)))
+                        }
+                    }
+                }
+
+                let fitParams: [(width: Float, height: Float, expected: Rect)] = [
+                    // Square upscale
+                    (width: 200, height: 200, expected: Rect(x: 100, y: 0, width: 600, height: 600)),
+                    // Same res as image
+                    (width: 800, height: 600, expected: Rect(x: 0, y: 0, width: 800, height: 600)),
+                    // Same ratio as image
+                    (width: 600, height: 450, expected: Rect(x: 0, y: 0, width: 800, height: 600)),
+                    // Landscape upscale
+                    (width: 600, height: 225, expected: Rect(x: 0, y: 150, width: 800, height: 300)),
+                    // Portrait upscale
+                    (width: 225, height: 600, expected: Rect(x: 287.5, y: 0, width: 225, height: 600)),
+                ]
+                fitParams.forEach { (width, height, expected) in
+                    context("when fitting an image of size \(width)x\(height)") {
+                        it("makes an imageRect of \(expected)") {
+                            let source = ImageSourceMock(width: width, height: height)
+                            let image = ImageMock(source: source)
+
+                            image.width(800.dip)
+                            image.height(600.dip)
+                            image.scalingMode(.fit)
+
+                            image.layout()
+
+                            expect(image.imageRect).to(equal(expected))
+                        }
+                    }
                 }
             }
 
-            describe("the measure func") {
+            describe("its measure func") {
                 context("when resizing is disabled") {
                     it("returns no size") {
                         let image = ImageMock(source: ImageSourceMock(), resizeViewToFitImage: false)

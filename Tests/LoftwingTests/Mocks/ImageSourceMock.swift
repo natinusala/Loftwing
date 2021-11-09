@@ -33,8 +33,13 @@ class GPUTextureMock: GPUTexture {
 class ImageSourceMock: Mock<ImageSource>, ImageSource {
     let skImage = OpaquePointer(bitPattern: 1234)
 
-    let width: Float = 800
-    let height: Float = 600
+    let width: Float
+    let height: Float
 
     let drawRect = Rect(x: 100, y: 100, width: 200, height: 200)
+
+    init(width: Float = 800, height: Float = 600) {
+        self.width = width
+        self.height = height
+    }
 }
