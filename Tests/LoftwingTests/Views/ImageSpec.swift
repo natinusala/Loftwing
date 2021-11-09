@@ -162,14 +162,22 @@ class ImageSpec: QuickSpec {
                     (width: 75, height: 150, scaleFactor: nil, expected: Rect(x: 250, y: 0, width: 300, height: 600)),
 
                     // 1:1 scaling - same dimensions as view
+                    (width: 800, height: 600, scaleFactor: 1, expected: Rect(x: 0, y: 0, width: 800, height: 600)),
                     // 1:1 scaling - square
+                    (width: 200, height: 200, scaleFactor: 1, expected: Rect(x: 300, y: 200, width: 200, height: 200)),
                     // 1:1 scaling - landscape
+                    (width: 150, height: 75, scaleFactor: 1, expected: Rect(x: 325, y: 262.5, width: 150, height: 75)),
                     // 1:1 scaling - portrait
+                    (width: 75, height: 150, scaleFactor: 1, expected: Rect(x: 362.5, y: 225, width: 75, height: 150)),
 
                     // Fixed scaling - same dimensions as view
+                    (width: 800, height: 600, scaleFactor: 3, expected: Rect(x: -800, y: -600, width: 2400, height: 1800)),
                     // Fixed scaling - square
+                    (width: 200, height: 200, scaleFactor: 2, expected: Rect(x: 200, y: 100, width: 400, height: 400)),
                     // Fixed scaling - landscape
+                    (width: 150, height: 75, scaleFactor: 2, expected: Rect(x: 250, y: 225, width: 300, height: 150)),
                     // Fixed scaling - portrait
+                    (width: 75, height: 150, scaleFactor: 2, expected: Rect(x: 325, y: 150, width: 150, height: 300)),
 
                     // Larger scaling - same dimensions as view
                     // Larger scaling - square
