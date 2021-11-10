@@ -61,7 +61,7 @@ public class Image: View, BindableView {
     }
 
     /// Where to draw the image. Absolute, computed when the view layout changes.
-    var imageRect: Rect?
+    var imageRect: Rect = Rect(x: 0, y: 0, width: 0, height: 0)
 
     /// Should the view dimensions be changed to fit the image?
     let resizeView: Bool
@@ -221,7 +221,7 @@ public class Image: View, BindableView {
 
             Logger.debug(
                 debugLayout,
-                "Image position and dimensions are \(self.imageRect!)"
+                "Image position and dimensions are \(self.imageRect)"
             )
         }
     }
@@ -230,7 +230,7 @@ public class Image: View, BindableView {
         if let source = self.source {
             canvas.drawImage(
                 source,
-                destRect: self.imageRect!,
+                destRect: self.imageRect,
                 paint: self.paint
             )
         }

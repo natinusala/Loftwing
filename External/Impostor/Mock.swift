@@ -25,6 +25,10 @@ enum MockState {
     /// if a similar call has not been recorded before.
     case expectations
 
+    /// Every call to a mocked method will fail the running test
+    /// if a similar call has been recorded before.
+    case notExpectations
+
     /// Every call to a mocked method is controlled to see if
     /// a similar call has been recorded before. The `failedControl`
     /// property will be set to any mismatched call.
@@ -62,6 +66,13 @@ open class Mock<Mocked> {
                 } else {
                     XCTFail("\(funcName) not called (was expected to be called with parameters \(makeSummary(for: args)))")
                 }
+            case .notExpectations:
+                // Reverse expectations mode: ensure that the given call does not exist
+                if let callsForThatFunction = self.calls[funcName] {
+                    if callsForThatFunction.contains(Call(args: args)) {
+                        XCTFail("\(funcName) was called with parameters \(makeSummary(for: args)), expected not to be called")
+                    }
+                }
             case .control:
                 // Control mode: see if the call is in the list, if it's not, set
                 // the `failedControl` property
@@ -95,6 +106,31 @@ open class Mock<Mocked> {
     /// parameters. To be used when the mock does inherit from the mocked protocol.
     public func expectWithInstance(_ instance: Mocked, expectations: (Mocked) -> ()) {
         self.state = .expectations
+        expectations(instance)
+        self.state = .recording
+    }
+
+    /// Allows to assert that no calls with given parameters were found in the calls history.
+    public func expectNot(expectations: (Mocked) -> ()) {
+        guard let instance = self as? Mocked else {
+            XCTFail("Mock does not inherit from the mocked protocol, please use expectNotWithInstance(_:expectations:)")
+            return
+        }
+
+        self.expectNotWithInstance(instance, expectations: expectations)
+    }
+
+    /// Allows to assert that no calls of that function were found in the calls history.
+    public func expectNotCalled(funcName: String) {
+        if self.calls[funcName] != nil {
+            XCTFail("\(funcName) was called, expected not to be called")
+        }
+    }
+
+    /// Allows to assert that no calls with given parameters were found in the calls history.
+    /// To be used when the mock does inherit from the mocked protocol.
+    public func expectNotWithInstance(_ instance: Mocked, expectations: (Mocked) -> ()) {
+        self.state = .notExpectations
         expectations(instance)
         self.state = .recording
     }

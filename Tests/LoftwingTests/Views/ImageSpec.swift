@@ -206,6 +206,31 @@ class ImageSpec: QuickSpec {
                 }
             }
 
+            context("when there is no source") {
+                it("doesn't draw anything") {
+                    let image = Image()
+                    let canvas = CanvasMock()
+
+                    image.draw(canvas: canvas)
+
+                    canvas.expectNotCalled(funcName: "drawImage(_:destRect:paint:)")
+                }
+            }
+
+            context("when there is a source") {
+                it("draws the source") {
+                    let source = ImageSourceMock()
+                    let image = Image(source: source)
+                    let canvas = CanvasMock()
+
+                    image.draw(canvas: canvas)
+
+                    canvas.expect { c in
+                        c.drawImage(source, destRect: image.imageRect, paint:image.paint)
+                    }
+                }
+            }
+
             describe("its measure func") {
                 context("when resizing is disabled") {
                     it("returns no size") {
