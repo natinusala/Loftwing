@@ -180,9 +180,13 @@ class ImageSpec: QuickSpec {
                     (width: 75, height: 150, scaleFactor: 2, expected: Rect(x: 325, y: 150, width: 150, height: 300)),
 
                     // Larger scaling - same dimensions as view
+                    (width: 800, height: 600, scaleFactor: 10, expected: Rect(x: -3600, y: -2700, width: 8000, height: 6000)),
                     // Larger scaling - square
+                    (width: 450, height: 450, scaleFactor: 10, expected: Rect(x: -1850, y: -1950, width: 4500, height: 4500)),
                     // Larger scaling - landscape
+                    (width: 1920, height: 1080, scaleFactor: 10, expected: Rect(x: -9200, y: -5100, width: 19200, height: 10800)),
                     // Larger scaling - portrait
+                    (width: 256, height: 384, scaleFactor: 10, expected: Rect(x: -880, y: -1620, width: 2560, height: 3840)),
                 ]
                 integerParams.forEach { (width, height, scaleFactor, expected) in
                     context("when scaling by \(String(describing: scaleFactor)) an image of \(width)x\(height)") {
