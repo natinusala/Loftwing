@@ -39,3 +39,18 @@ class ActivityMock: EquatableMock<Activity>, Activity {
         record()
     }
 }
+
+class ContentActivityMock: ContentActivity {
+    let mock = Mock<ContentActivity>()
+
+    let viewMock = ViewMock()
+
+    override var content: View {
+        self.viewMock
+    }
+
+    override func onCreate() {
+        mock.record()
+        super.onCreate()
+    }
+}

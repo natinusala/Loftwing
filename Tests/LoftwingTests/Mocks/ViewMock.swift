@@ -14,16 +14,10 @@
     limitations under the License.
 */
 
-import XCTest
-import Quick
+import Impostor
 
-@testable import LoftwingTests
+@testable import Loftwing
 
-QCKMain([
-    // Add every spec class below
-    ActivitiesStackSpec.self,
-    ColorSpec.self,
-    ImageSourceSpec.self,
-    ImageSpec.self,
-    ActivitySpec.self,
-])
+class ViewMock: View {
+    let mock = Mock<View>()
+}
