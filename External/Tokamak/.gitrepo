@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/TokamakUI/Tokamak
+	branch = main
+	commit = 2ad85b329d6272a98c3571c12a5e9ea7cbb7bfab
+	parent = 879755c6c9e772d53ffffc1e8f64bad34a2e65b6
+	method = merge
+	cmdver = 0.4.1
