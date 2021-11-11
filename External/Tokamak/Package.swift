@@ -18,6 +18,10 @@ let package = Package(
       targets: ["TokamakDemo"]
     ),
     .library(
+      name: "TokamakCore",
+      targets: ["TokamakCore"]
+    ),
+    .library(
       name: "TokamakDOM",
       targets: ["TokamakDOM"]
     ),

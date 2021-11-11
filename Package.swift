@@ -46,6 +46,9 @@ let package = Package(
         // Testing dependencies
         .package(url: "https://github.com/Quick/Quick.git", .upToNextMajor(from: "4.0.0")),
         .package(url: "https://github.com/Quick/Nimble.git", .upToNextMajor(from: "9.2.1")),
+
+        .package(path: "External/Tokamak"),
+        .package(url: "https://github.com/swift-server/swift-backtrace.git", .upToNextMajor(from: "1.3.1"))
     ],
     targets: [
         // Loftwing targets
@@ -59,6 +62,14 @@ let package = Package(
                 "Skia",
                 "Rainbow",
                 "Async",
+                .product(
+                    name: "TokamakCore",
+                    package: "Tokamak"
+                ),
+                .product(
+                    name: "Backtrace",
+                    package: "swift-backtrace"
+                ),
             ]
         ),
         .target(
